@@ -2,13 +2,14 @@ import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
 
+const ADMIN_EMAIL = 'fernandomariodasmartins@gmail.com';
+
 const navItems = [
   { path: '/dashboard', label: 'Dashboard', icon: 'ri-layout-grid-line' },
   { path: '/pets', label: 'Meus Pets', icon: 'ri-heart-2-line' },
   { path: '/reminders', label: 'Lembretes', icon: 'ri-alarm-line' },
   { path: '/health', label: 'Saúde', icon: 'ri-heart-pulse-line' },
   { path: '/planos', label: 'Planos', icon: 'ri-vip-crown-line' },
-  { path: '/admin', label: 'Admin', icon: 'ri-shield-star-line' },
 ];
 
 export default function AppSidebar() {
@@ -17,6 +18,12 @@ export default function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
 
   const handleLogout = async () => { await logout(); navigate('/'); };
+
+  const isAdmin = currentUser?.email === ADMIN_EMAIL;
+
+  const visibleItems = isAdmin
+    ? [...navItems, { path: '/admin', label: 'Admin', icon: 'ri-shield-star-line' }]
+    : navItems;
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -28,7 +35,7 @@ export default function AppSidebar() {
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 py-5 border-b border-gray-100">
         <div className="w-12 h-12 flex items-center justify-center flex-shrink-0">
-          <img src="/logo.png" alt="PetVida" className="w-12 h-12 object-contain" />
+          <img src="/logo.png" alt="PetVida" className="w-12 h-12 object-contain rounded-xl" />
         </div>
         {!collapsed && <span className="font-bold text-gray-800 text-lg tracking-tight">PetVida</span>}
         <button onClick={() => setCollapsed(!collapsed)} className="ml-auto w-7 h-7 flex items-center justify-center rounded-md hover:bg-gray-100 text-gray-400 cursor-pointer">
@@ -46,8 +53,8 @@ export default function AppSidebar() {
             <div className="min-w-0">
               <p className="text-sm font-semibold text-gray-800 truncate">{currentUser.name}</p>
               <div className="flex items-center gap-1.5">
-                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${isPremium ? 'bg-orange-100 text-orange-600' : 'bg-gray-100 text-gray-500'}`}>
-                  {isPremium ? '★ PREMIUM' : 'GRÁTIS'}
+                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${isAdmin ? 'bg-purple-100 text-purple-600' : isPremium ? 'bg-orange-100 text-orange-600' : 'bg-gray-100 text-gray-500'}`}>
+                  {isAdmin ? '⚡ ADMIN' : isPremium ? '★ PREMIUM' : 'GRÁTIS'}
                 </span>
                 <span className="text-xs text-gray-400">{pets.length} pet{pets.length !== 1 ? 's' : ''}</span>
               </div>
@@ -58,9 +65,10 @@ export default function AppSidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-1">
-        {navItems.map(item => {
+        {visibleItems.map(item => {
           const isReminders = item.path === '/reminders';
           const isPlanos = item.path === '/planos';
+          const isAdminItem = item.path === '/admin';
           const showOverdueBadge = isReminders && overdueCount > 0;
           const showPendingBadge = isReminders && !showOverdueBadge && pendingCount > 0;
           const badgeCount = showOverdueBadge ? overdueCount : pendingCount;
@@ -70,8 +78,12 @@ export default function AppSidebar() {
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all cursor-pointer whitespace-nowrap ${
                   isActive
-                    ? isPlanos ? 'bg-orange-50 text-orange-600' : 'bg-emerald-50 text-emerald-600'
-                    : isPlanos && !isPremium ? 'text-orange-500 hover:bg-orange-50' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'
+                    ? isAdminItem ? 'bg-purple-50 text-purple-600'
+                    : isPlanos ? 'bg-orange-50 text-orange-600'
+                    : 'bg-emerald-50 text-emerald-600'
+                    : isAdminItem ? 'text-purple-500 hover:bg-purple-50'
+                    : isPlanos && !isPremium ? 'text-orange-500 hover:bg-orange-50'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-800'
                 }`
               }
             >
@@ -98,7 +110,7 @@ export default function AppSidebar() {
       </nav>
 
       {/* Upgrade banner for free users */}
-      {!collapsed && !isPremium && (
+      {!collapsed && !isPremium && !isAdmin && (
         <div className="mx-3 mb-3 px-3 py-3 bg-gradient-to-r from-orange-500 to-orange-400 rounded-xl cursor-pointer" onClick={() => navigate('/planos')}>
           <div className="flex items-center gap-2 mb-1">
             <i className="ri-vip-crown-line text-white text-sm"></i>
