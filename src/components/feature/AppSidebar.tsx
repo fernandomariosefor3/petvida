@@ -8,6 +8,7 @@ const navItems = [
   { path: '/reminders', label: 'Lembretes', icon: 'ri-alarm-line' },
   { path: '/health', label: 'Saúde', icon: 'ri-heart-pulse-line' },
   { path: '/planos', label: 'Planos', icon: 'ri-vip-crown-line' },
+  { path: '/admin', label: 'Admin', icon: 'ri-shield-star-line' },
 ];
 
 export default function AppSidebar() {
