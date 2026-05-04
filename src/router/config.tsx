@@ -1,3 +1,4 @@
+import AdminPage from '@/pages/admin/page';
 import { RouteObject } from 'react-router-dom';
 import HomePage from '@/pages/home/page';
 import RegistrationPage from '@/pages/registration/page';
@@ -13,22 +14,10 @@ import PlanosPage from '@/pages/planos/page';
 import NotFound from '@/pages/NotFound';
 
 const routes: RouteObject[] = [
-  {
-    path: '/',
-    element: <HomePage />,
-  },
-  {
-    path: '/register',
-    element: <RegistrationPage />,
-  },
-  {
-    path: '/checkout-success',
-    element: <CheckoutSuccessPage />,
-  },
-  {
-    path: '/faq',
-    element: <FaqPage />,
-  },
+  { path: '/', element: <HomePage /> },
+  { path: '/register', element: <RegistrationPage /> },
+  { path: '/checkout-success', element: <CheckoutSuccessPage /> },
+  { path: '/faq', element: <FaqPage /> },
   {
     path: '/',
     element: <AppLayout />,
@@ -39,12 +28,10 @@ const routes: RouteObject[] = [
       { path: 'reminders', element: <RemindersPage /> },
       { path: 'health', element: <HealthPage /> },
       { path: 'planos', element: <PlanosPage /> },
+      { path: 'admin', element: <AdminPage /> },
     ],
   },
-  {
-    path: '*',
-    element: <NotFound />,
-  },
+  { path: '*', element: <NotFound /> },
 ];
 
 export default routes;
