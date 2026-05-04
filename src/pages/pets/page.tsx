@@ -14,6 +14,29 @@ const defaultForm: PetFormData = {
   bloodType: '', allergies: '', notes: '',
 };
 
+const speciesEmoji: Record<string, string> = {
+  'Cão': '🐶', 'Gato': '🐱', 'Pássaro': '🐦', 'Coelho': '🐰',
+  'Hamster': '🐹', 'Peixe': '🐟', 'Réptil': '🦎', 'Outro': '🐾',
+};
+
+const PawBg = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className="w-full h-full">
+    <ellipse cx="6" cy="7" rx="2" ry="2.5"/>
+    <ellipse cx="11" cy="5" rx="2" ry="2.5"/>
+    <ellipse cx="16" cy="7" rx="2" ry="2.5"/>
+    <ellipse cx="18.5" cy="12" rx="1.5" ry="2"/>
+    <path d="M12 10c-3.5 0-7 2.5-7 6 0 2.5 2 4 4 4h6c2 0 4-1.5 4-4 0-3.5-3.5-6-7-6z"/>
+  </svg>
+);
+
+const cardGradients = [
+  'from-orange-50 to-amber-50 border-orange-100',
+  'from-emerald-50 to-teal-50 border-emerald-100',
+  'from-violet-50 to-indigo-50 border-violet-100',
+  'from-rose-50 to-pink-50 border-rose-100',
+  'from-sky-50 to-blue-50 border-sky-100',
+];
+
 export default function PetsPage() {
   const { currentUser, pets, addPet, updatePet, deletePet, uploadPhoto, canAddPet, canUploadPhoto, isPremium, planLimits } = useApp();
   const navigate = useNavigate();
@@ -77,24 +100,26 @@ export default function PetsPage() {
   };
 
   return (
-    <div className="flex-1 overflow-y-auto bg-gray-50">
+    <div className="flex-1 overflow-y-auto" style={{ background: 'linear-gradient(160deg, #fff7ed 0%, #f0fdf4 50%, #eff6ff 100%)' }}>
       <div className="p-6 max-w-5xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">Meus Pets</h1>
+            <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+              🐾 Meus Pets
+            </h1>
             <p className="text-sm text-gray-500 mt-0.5">
               {pets.length}{!isPremium ? `/${planLimits.maxPets}` : ''} pet{pets.length !== 1 ? 's' : ''} cadastrado{pets.length !== 1 ? 's' : ''}
               {!isPremium && <span className="text-orange-500 ml-1">(plano grátis)</span>}
             </p>
           </div>
           <button onClick={openAdd}
-            className={`flex items-center gap-2 px-5 py-2.5 font-semibold rounded-xl text-sm transition-colors cursor-pointer whitespace-nowrap ${
-              canAddPet ? 'bg-orange-500 hover:bg-orange-600 text-white' : 'bg-gray-200 text-gray-400'
+            className={`flex items-center gap-2 px-5 py-2.5 font-semibold rounded-xl text-sm transition-all cursor-pointer whitespace-nowrap shadow-sm ${
+              canAddPet ? 'bg-orange-500 hover:bg-orange-600 text-white hover:shadow-md' : 'bg-gray-200 text-gray-400'
             }`}
           >
             <i className={canAddPet ? 'ri-add-line' : 'ri-lock-line'}></i>
-            {canAddPet ? 'Novo Pet' : 'Limite atingido'}
+            {canAddPet ? '+ Novo Pet' : 'Limite atingido'}
           </button>
         </div>
 
@@ -119,19 +144,18 @@ export default function PetsPage() {
           <div className="relative mb-6">
             <div className="absolute left-3 top-1/2 -translate-y-1/2"><i className="ri-search-line text-gray-400 text-sm"></i></div>
             <input type="text" placeholder="Buscar por nome, raça ou espécie..." value={search} onChange={e => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400" />
+              className="w-full pl-9 pr-4 py-2.5 bg-white border border-orange-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400 shadow-sm" />
           </div>
         )}
 
         {/* Empty */}
         {pets.length === 0 && (
-          <div className="bg-white rounded-2xl p-12 border border-gray-100 text-center">
-            <div className="w-16 h-16 bg-orange-50 rounded-full flex items-center justify-center mx-auto mb-4">
-              <i className="ri-heart-2-line text-orange-400 text-2xl"></i>
-            </div>
-            <h3 className="font-semibold text-gray-800 mb-2">Nenhum pet cadastrado</h3>
-            <p className="text-gray-400 text-sm mb-6">Adicione seu primeiro pet e comece a organizar os cuidados!</p>
-            <button onClick={openAdd} className="inline-flex items-center gap-2 px-6 py-2.5 bg-orange-500 text-white font-semibold rounded-xl text-sm cursor-pointer whitespace-nowrap">
+          <div className="bg-white rounded-2xl p-12 border border-orange-100 text-center relative overflow-hidden shadow-sm">
+            <div className="absolute bottom-0 right-0 w-40 h-40 opacity-5 pointer-events-none text-orange-400"><PawBg /></div>
+            <div className="text-7xl mb-4">🐶🐱</div>
+            <h3 className="font-bold text-gray-800 mb-2 text-lg">Nenhum pet cadastrado</h3>
+            <p className="text-gray-400 text-sm mb-6">Adicione seu primeiro pet e comece a organizar os cuidados com amor! 💕</p>
+            <button onClick={openAdd} className="inline-flex items-center gap-2 px-6 py-2.5 bg-orange-500 text-white font-semibold rounded-xl text-sm cursor-pointer whitespace-nowrap hover:bg-orange-600 transition-colors shadow-sm">
               <i className="ri-add-line"></i> Adicionar primeiro pet
             </button>
           </div>
@@ -140,64 +164,87 @@ export default function PetsPage() {
         {/* Pet Cards */}
         {filtered.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {filtered.map(pet => (
-              <div key={pet.id} className="bg-white rounded-2xl border border-gray-100 overflow-hidden group">
-                <div className="relative h-44 overflow-hidden">
-                  {pet.photo ? (
-                    <img src={pet.photo} alt={pet.name} className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300" />
-                  ) : (
-                    <div className="w-full h-full bg-orange-50 flex items-center justify-center group-hover:bg-orange-100 transition-colors">
-                      <i className="ri-heart-2-line text-orange-200 text-4xl"></i>
-                    </div>
-                  )}
-                  <div className="absolute top-3 right-3 flex gap-2">
-                    <button onClick={() => openEdit(pet)} className="w-8 h-8 bg-white/90 backdrop-blur-sm rounded-lg flex items-center justify-center text-gray-600 hover:text-orange-600 transition-colors cursor-pointer"><i className="ri-edit-line text-sm"></i></button>
-                    <button onClick={() => setDeleteConfirm(pet.id)} className="w-8 h-8 bg-white/90 backdrop-blur-sm rounded-lg flex items-center justify-center text-gray-600 hover:text-rose-500 transition-colors cursor-pointer"><i className="ri-delete-bin-line text-sm"></i></button>
-                  </div>
-                  <div className="absolute bottom-3 left-3 flex gap-2">
-                    <span className="bg-white/90 backdrop-blur-sm text-gray-700 text-xs font-medium px-2.5 py-1 rounded-full">{pet.gender === 'male' ? '♂ Macho' : '♀ Fêmea'}</span>
-                    {pet.neutered && <span className="bg-emerald-500/90 backdrop-blur-sm text-white text-xs font-medium px-2.5 py-1 rounded-full">Castrado</span>}
-                  </div>
-                </div>
-                <div className="p-4">
-                  <div className="flex items-start justify-between mb-3">
-                    <div><h3 className="font-bold text-gray-800">{pet.name}</h3><p className="text-sm text-gray-500">{pet.breed || pet.species}</p></div>
-                    <span className="text-xs font-medium text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full whitespace-nowrap">{pet.species}</span>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    {[{ label: 'Idade', value: getAge(pet.birthDate) }, { label: 'Peso', value: pet.weight ? `${pet.weight} kg` : '—' }, { label: 'Cor', value: pet.color || '—' }].map(item => (
-                      <div key={item.label} className="bg-gray-50 rounded-xl p-2 text-center">
-                        <p className="text-xs text-gray-400">{item.label}</p>
-                        <p className="text-xs font-semibold text-gray-700 mt-0.5 truncate">{item.value}</p>
+            {filtered.map((pet, idx) => {
+              const gradClass = cardGradients[idx % cardGradients.length];
+              const emoji = speciesEmoji[pet.species] || '🐾';
+              return (
+                <div key={pet.id} className={`bg-gradient-to-br ${gradClass} rounded-2xl border overflow-hidden group shadow-sm hover:shadow-md transition-shadow`}>
+                  <div className="relative h-44 overflow-hidden">
+                    {pet.photo ? (
+                      <img src={pet.photo} alt={pet.name} className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300" />
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center relative"
+                        style={{ background: 'linear-gradient(135deg, rgba(251,191,36,0.15) 0%, rgba(52,211,153,0.15) 100%)' }}>
+                        {/* Paw pattern background */}
+                        <div className="absolute inset-0 grid grid-cols-4 gap-4 p-4 opacity-10 pointer-events-none">
+                          {Array.from({ length: 12 }).map((_, i) => (
+                            <div key={i} className={`text-orange-400 ${i % 3 === 0 ? 'rotate-12' : i % 3 === 1 ? '-rotate-12' : 'rotate-0'}`}>
+                              <PawBg />
+                            </div>
+                          ))}
+                        </div>
+                        <span className="text-6xl z-10">{emoji}</span>
+                        <p className="text-xs text-gray-400 mt-2 z-10 font-medium">Sem foto</p>
                       </div>
-                    ))}
-                  </div>
-                  {pet.allergies && (
-                    <div className="flex items-center gap-1.5 mt-3 bg-amber-50 rounded-lg px-2.5 py-1.5">
-                      <i className="ri-alert-line text-amber-500 text-xs"></i>
-                      <p className="text-xs text-amber-700 truncate">Alergias: {pet.allergies}</p>
+                    )}
+                    <div className="absolute top-3 right-3 flex gap-2">
+                      <button onClick={() => openEdit(pet)} className="w-8 h-8 bg-white/90 backdrop-blur-sm rounded-lg flex items-center justify-center text-gray-600 hover:text-orange-600 transition-colors cursor-pointer shadow-sm"><i className="ri-edit-line text-sm"></i></button>
+                      <button onClick={() => setDeleteConfirm(pet.id)} className="w-8 h-8 bg-white/90 backdrop-blur-sm rounded-lg flex items-center justify-center text-gray-600 hover:text-rose-500 transition-colors cursor-pointer shadow-sm"><i className="ri-delete-bin-line text-sm"></i></button>
                     </div>
-                  )}
-                  <Link to={`/pets/${pet.id}`} className="mt-4 flex items-center justify-center gap-1.5 w-full py-2 rounded-xl bg-gray-50 hover:bg-orange-50 text-gray-500 hover:text-orange-600 text-xs font-semibold transition-all cursor-pointer whitespace-nowrap">
-                    Ver detalhes <i className="ri-arrow-right-line text-xs"></i>
-                  </Link>
+                    <div className="absolute bottom-3 left-3 flex gap-2">
+                      <span className="bg-white/90 backdrop-blur-sm text-gray-700 text-xs font-medium px-2.5 py-1 rounded-full shadow-sm">{pet.gender === 'male' ? '♂ Macho' : '♀ Fêmea'}</span>
+                      {pet.neutered && <span className="bg-emerald-500/90 backdrop-blur-sm text-white text-xs font-medium px-2.5 py-1 rounded-full">Castrado</span>}
+                    </div>
+                  </div>
+                  <div className="p-4 bg-white/70 backdrop-blur-sm">
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <h3 className="font-bold text-gray-800">{emoji} {pet.name}</h3>
+                        <p className="text-sm text-gray-500">{pet.breed || pet.species}</p>
+                      </div>
+                      <span className="text-xs font-medium text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full whitespace-nowrap border border-emerald-100">{pet.species}</span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[{ label: 'Idade', value: getAge(pet.birthDate) }, { label: 'Peso', value: pet.weight ? `${pet.weight} kg` : '—' }, { label: 'Cor', value: pet.color || '—' }].map(item => (
+                        <div key={item.label} className="bg-white/80 rounded-xl p-2 text-center border border-white">
+                          <p className="text-xs text-gray-400">{item.label}</p>
+                          <p className="text-xs font-semibold text-gray-700 mt-0.5 truncate">{item.value}</p>
+                        </div>
+                      ))}
+                    </div>
+                    {pet.allergies && (
+                      <div className="flex items-center gap-1.5 mt-3 bg-amber-50 rounded-lg px-2.5 py-1.5 border border-amber-100">
+                        <i className="ri-alert-line text-amber-500 text-xs"></i>
+                        <p className="text-xs text-amber-700 truncate">Alergias: {pet.allergies}</p>
+                      </div>
+                    )}
+                    <Link to={`/pets/${pet.id}`} className="mt-4 flex items-center justify-center gap-1.5 w-full py-2 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-600 hover:text-orange-700 text-xs font-semibold transition-all cursor-pointer whitespace-nowrap border border-orange-100">
+                      Ver detalhes <i className="ri-arrow-right-line text-xs"></i>
+                    </Link>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
         {filtered.length === 0 && pets.length > 0 && (
-          <div className="text-center py-12 text-gray-400"><i className="ri-search-line text-3xl mb-3 block"></i><p>Nenhum pet encontrado para &ldquo;{search}&rdquo;</p></div>
+          <div className="text-center py-12 text-gray-400">
+            <div className="text-5xl mb-3">🔍</div>
+            <p>Nenhum pet encontrado para &ldquo;{search}&rdquo;</p>
+          </div>
         )}
       </div>
 
       {/* Modal Form */}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
-              <h2 className="font-bold text-gray-800 text-lg">{editingId ? 'Editar Pet' : 'Novo Pet'}</h2>
+          <div className="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-xl">
+            <div className="flex items-center justify-between p-6 border-b border-gray-100"
+              style={{ background: 'linear-gradient(135deg, #fff7ed, #f0fdf4)' }}>
+              <h2 className="font-bold text-gray-800 text-lg flex items-center gap-2">
+                {editingId ? '✏️ Editar Pet' : '🐾 Novo Pet'}
+              </h2>
               <button onClick={() => setShowForm(false)} className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400 cursor-pointer"><i className="ri-close-line"></i></button>
             </div>
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
@@ -205,8 +252,11 @@ export default function PetsPage() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Foto do pet {!canUploadPhoto && <span className="text-orange-500 text-xs">(Premium)</span>}</label>
                 <div className="flex items-center gap-4">
-                  <div className="w-20 h-20 rounded-xl overflow-hidden bg-gray-100 flex items-center justify-center flex-shrink-0 border border-gray-200">
-                    {form.photo ? <img src={form.photo} alt="Pet" className="w-full h-full object-cover" /> : <i className="ri-camera-line text-gray-300 text-xl"></i>}
+                  <div className="w-20 h-20 rounded-xl overflow-hidden bg-orange-50 flex items-center justify-center flex-shrink-0 border border-orange-100">
+                    {form.photo
+                      ? <img src={form.photo} alt="Pet" className="w-full h-full object-cover" />
+                      : <span className="text-3xl">{speciesEmoji[form.species] || '🐾'}</span>
+                    }
                   </div>
                   <div className="flex-1">
                     <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
@@ -239,7 +289,7 @@ export default function PetsPage() {
               </div>
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setShowForm(false)} className="flex-1 py-2.5 border border-gray-200 text-gray-600 font-medium rounded-xl text-sm hover:bg-gray-50 cursor-pointer whitespace-nowrap">Cancelar</button>
-                <button type="submit" className="flex-1 py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-xl text-sm transition-colors cursor-pointer whitespace-nowrap">{editingId ? 'Salvar alterações' : 'Adicionar pet'}</button>
+                <button type="submit" className="flex-1 py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-xl text-sm transition-colors cursor-pointer whitespace-nowrap">{editingId ? 'Salvar alterações' : '🐾 Adicionar pet'}</button>
               </div>
             </form>
           </div>
@@ -249,8 +299,8 @@ export default function PetsPage() {
       {/* Delete Confirm */}
       {deleteConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-sm">
-            <div className="w-12 h-12 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-4"><i className="ri-delete-bin-line text-rose-500 text-xl"></i></div>
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
+            <div className="text-5xl text-center mb-4">😢</div>
             <h3 className="font-bold text-gray-800 text-center mb-2">Remover pet?</h3>
             <p className="text-gray-500 text-sm text-center mb-6">Todos os lembretes e registros de saúde deste pet também serão removidos.</p>
             <div className="flex gap-3">
@@ -264,8 +314,8 @@ export default function PetsPage() {
       {/* Upgrade Modal */}
       {showUpgradeModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-sm text-center">
-            <div className="w-14 h-14 bg-orange-50 rounded-full flex items-center justify-center mx-auto mb-4"><i className="ri-vip-crown-line text-orange-500 text-2xl"></i></div>
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm text-center shadow-xl">
+            <div className="text-5xl mb-4">👑</div>
             <h3 className="font-bold text-gray-800 text-lg mb-2">Recurso Premium</h3>
             <p className="text-gray-500 text-sm mb-6">Este recurso está disponível apenas no plano Premium. Faça upgrade por apenas R$29,99/ano!</p>
             <div className="flex gap-3">
