@@ -1,4 +1,4 @@
-# PetVida Care 🐾
+# PetVida Care : cuidados com os pets🐾
 
 Aplicativo web para tutores de animais de estimação gerenciarem a saúde e rotina dos seus pets.
 
