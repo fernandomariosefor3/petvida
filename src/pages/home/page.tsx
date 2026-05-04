@@ -436,7 +436,7 @@ export default function HomePage() {
           <div className="absolute bottom-10 right-20 text-8xl">🐾</div>
         </div>
         <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
-          <img src="/images/logo-petvida.jpeg" alt="PetVida" className="w-20 h-20 rounded-2xl mx-auto mb-6 shadow-lg" />
+          <img src="/logo.png" alt="PetVida" className="w-20 h-20 rounded-2xl mx-auto mb-6 shadow-lg" />
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-3">PetVida</h2>
           <p className="text-orange-100 text-lg mb-2">Cuidando de quem você ama</p>
           <div className="flex flex-wrap justify-center gap-3 my-8">
@@ -457,7 +457,7 @@ export default function HomePage() {
       <footer className="bg-gray-900 py-10">
         <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-2.5">
-            <img src="/images/logo-petvida.jpeg" alt="PetVida" className="w-8 h-8 rounded-lg object-contain" />
+            <img src="/logo.png" alt="PetVida" className="w-8 h-8 rounded-lg object-contain" />
             <span className="font-bold text-white">PetVida</span>
           </div>
           <div className="flex flex-col sm:flex-row items-center gap-4">
