@@ -431,10 +431,6 @@ export default function HomePage() {
 
       {/* CTA */}
       <section className="py-24 bg-gradient-to-br from-orange-500 to-red-500 relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-10 left-20 text-8xl">🐾</div>
-          <div className="absolute bottom-10 right-20 text-8xl">🐾</div>
-        </div>
         <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
           <img src="/logo.png" alt="PetVida" className="w-20 h-20 rounded-2xl mx-auto mb-6 shadow-lg" />
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-3">PetVida</h2>
@@ -474,7 +470,7 @@ export default function HomePage() {
             <a href="#" className="text-gray-400 hover:text-white text-sm transition-colors">Termos</a>
           </div>
         </div>
-        <p className="text-center text-gray-600 text-xs mt-6">© 2026 PetVida. Feito com amor para os pets. 🐾</p>
+        <p className="text-center text-gray-600 text-xs mt-6">© 2026 PetVida. Feito com amor para os pets.</p>
       </footer>
     </div>
   );

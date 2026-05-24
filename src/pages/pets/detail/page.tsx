@@ -57,7 +57,7 @@ export default function PetDetailPage() {
     setShowEdit(true);
   };
 
-  const handleEditSubmit = async (e: React.FormEvent) => {
+  const handleEditSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!form) return;
     await updatePet(pet.id, form);

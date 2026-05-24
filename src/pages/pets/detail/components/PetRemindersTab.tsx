@@ -73,7 +73,7 @@ export default function PetRemindersTab({ petId, petName }: Props) {
     setShowForm(true);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (editingId) {
       await updateReminder(editingId, form);

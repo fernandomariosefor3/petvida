@@ -25,7 +25,7 @@ export default function PetHealthTab({ petId }: Props) {
   const [typeFilter, setTypeFilter] = useState('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [form, setForm] = useState<HealthFormData>({
-    petId, type: 'appointment', date: '', weight: undefined, notes: '', vet: '', clinic: '',
+    petId, type: 'appointment', date: '', weight: undefined, notes: '', vet: '', clinic: '', attachmentUrl: '',
   });
 
   const records = healthRecords
@@ -37,18 +37,18 @@ export default function PetHealthTab({ petId }: Props) {
     new Date(d + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
 
   const openAdd = () => {
-    setForm({ petId, type: 'appointment', date: '', weight: undefined, notes: '', vet: '', clinic: '' });
+    setForm({ petId, type: 'appointment', date: '', weight: undefined, notes: '', vet: '', clinic: '', attachmentUrl: '' });
     setEditingId(null);
     setShowForm(true);
   };
 
   const openEdit = (h: HealthRecord) => {
-    setForm({ petId: h.petId, type: h.type, date: h.date, weight: h.weight, notes: h.notes, vet: h.vet, clinic: h.clinic });
+    setForm({ petId: h.petId, type: h.type, date: h.date, weight: h.weight, notes: h.notes, vet: h.vet, clinic: h.clinic, attachmentUrl: h.attachmentUrl });
     setEditingId(h.id);
     setShowForm(true);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (editingId) {
       await updateHealthRecord(editingId, form);
