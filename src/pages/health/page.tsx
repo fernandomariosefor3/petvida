@@ -27,6 +27,25 @@ const defaultForm: HealthFormData = {
   attachmentUrl: '',
 };
 
+const statCards = (healthRecords: HealthRecord[]) => [
+  {
+    label: 'Total de Registros', value: healthRecords.length, icon: 'ri-clipboard-line', type: 'all',
+    gradient: 'from-teal-500 to-cyan-400', iconBg: 'bg-white/20',
+  },
+  {
+    label: 'Consultas', value: healthRecords.filter(h => h.type === 'appointment').length, icon: 'ri-stethoscope-line', type: 'appointment',
+    gradient: 'from-amber-500 to-orange-400', iconBg: 'bg-white/20',
+  },
+  {
+    label: 'Vacinas', value: healthRecords.filter(h => h.type === 'vaccine').length, icon: 'ri-syringe-line', type: 'vaccine',
+    gradient: 'from-emerald-500 to-green-400', iconBg: 'bg-white/20',
+  },
+  {
+    label: 'Pesagens', value: healthRecords.filter(h => h.type === 'weight').length, icon: 'ri-scales-line', type: 'weight',
+    gradient: 'from-indigo-500 to-violet-400', iconBg: 'bg-white/20',
+  },
+];
+
 export default function HealthPage() {
   const { currentUser, pets, healthRecords, addHealthRecord, updateHealthRecord, deleteHealthRecord, getPetById } = useApp();
   const [showForm, setShowForm] = useState(false);
@@ -78,46 +97,52 @@ export default function HealthPage() {
   const weightDiff = latestWeight && prevWeight && latestWeight.weight && prevWeight.weight
     ? (latestWeight.weight - prevWeight.weight).toFixed(1) : null;
 
-  const statCards = [
-    { label: 'Total', value: healthRecords.length, icon: 'ri-clipboard-line', type: 'all', color: 'text-teal-600', bg: 'bg-teal-50' },
-    { label: 'Consultas', value: healthRecords.filter(h => h.type === 'appointment').length, icon: 'ri-stethoscope-line', type: 'appointment', color: 'text-amber-600', bg: 'bg-amber-50' },
-    { label: 'Vacinas', value: healthRecords.filter(h => h.type === 'vaccine').length, icon: 'ri-syringe-line', type: 'vaccine', color: 'text-emerald-600', bg: 'bg-emerald-50' },
-    { label: 'Pesagens', value: healthRecords.filter(h => h.type === 'weight').length, icon: 'ri-scales-line', type: 'weight', color: 'text-indigo-600', bg: 'bg-indigo-50' },
-  ];
+  const cards = statCards(healthRecords);
 
   return (
-    <div className="flex-1 overflow-y-auto bg-slate-50">
-      <div className="p-6 max-w-5xl mx-auto">
+    <div className="flex-1 overflow-y-auto bg-gray-50">
 
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+      {/* Hero Header with real photo */}
+      <div className="relative h-44 overflow-hidden">
+        <img
+          src="https://images.unsplash.com/photo-1628009368231-7bb7cfcb0def?w=1200&h=300&fit=crop&crop=center"
+          alt="Saúde dos pets"
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-teal-900/75 via-teal-800/60 to-transparent"></div>
+        <div className="absolute inset-0 flex items-end p-6 justify-between">
           <div>
-            <h1 className="text-xl font-bold text-gray-900">Saúde</h1>
-            <p className="text-sm text-gray-400 mt-0.5">{healthRecords.length} registro{healthRecords.length !== 1 ? 's' : ''}</p>
+            <h1 className="text-2xl font-bold text-white drop-shadow">Saúde</h1>
+            <p className="text-teal-100 text-sm mt-0.5">
+              {healthRecords.length} registro{healthRecords.length !== 1 ? 's' : ''} · histórico completo dos seus pets
+            </p>
           </div>
           <button
             onClick={openAdd}
             disabled={pets.length === 0}
-            className="flex items-center gap-2 px-5 py-2.5 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed text-white font-semibold rounded-lg text-sm transition-all cursor-pointer whitespace-nowrap"
+            className="flex items-center gap-2 px-5 py-2.5 bg-white hover:bg-gray-50 disabled:bg-white/40 disabled:text-white/60 disabled:cursor-not-allowed text-teal-700 font-semibold rounded-xl text-sm shadow-lg transition-all cursor-pointer whitespace-nowrap"
           >
             <i className="ri-add-line"></i> Novo registro
           </button>
         </div>
+      </div>
 
-        {/* Summary cards */}
+      <div className="p-6 max-w-5xl mx-auto">
+
+        {/* Stat Cards */}
         {pets.length > 0 && (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            {statCards.map(stat => (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6 -mt-8 relative z-10">
+            {cards.map(stat => (
               <button
                 key={stat.label}
                 onClick={() => setSelectedType(selectedType === stat.type ? 'all' : stat.type)}
-                className={`bg-white rounded-xl p-4 border text-left transition-all cursor-pointer hover:shadow-sm ${selectedType === stat.type ? 'border-orange-200 shadow-sm' : 'border-gray-100'}`}
+                className={`bg-gradient-to-br ${stat.gradient} rounded-2xl p-4 text-left transition-all cursor-pointer hover:shadow-lg hover:scale-[1.02] shadow-md ${selectedType === stat.type ? 'ring-2 ring-white ring-offset-2 scale-[1.02]' : ''}`}
               >
-                <div className={`w-9 h-9 rounded-lg flex items-center justify-center mb-3 ${stat.bg}`}>
-                  <i className={`${stat.icon} text-base ${stat.color}`}></i>
+                <div className={`w-9 h-9 ${stat.iconBg} rounded-xl flex items-center justify-center mb-3`}>
+                  <i className={`${stat.icon} text-base text-white`}></i>
                 </div>
-                <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-                <p className="text-xs text-gray-400 mt-0.5">{stat.label}</p>
+                <p className="text-3xl font-bold text-white">{stat.value}</p>
+                <p className="text-xs text-white/80 mt-0.5 font-medium">{stat.label}</p>
               </button>
             ))}
           </div>
@@ -125,9 +150,14 @@ export default function HealthPage() {
 
         {/* Weight tracker */}
         {weightRecords.length > 0 && (
-          <div className="bg-white rounded-xl border border-gray-100 p-5 mb-6 shadow-sm">
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 mb-6 shadow-sm">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold text-gray-800 text-sm">Evolução do Peso</h2>
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 bg-teal-50 rounded-lg flex items-center justify-center">
+                  <i className="ri-scales-line text-teal-500 text-sm"></i>
+                </div>
+                <h2 className="font-semibold text-gray-800 text-sm">Evolução do Peso</h2>
+              </div>
               {pets.length > 1 && (
                 <select value={weightPetId} onChange={e => setSelectedPet(e.target.value)} className="text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none bg-white cursor-pointer">
                   {pets.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -158,7 +188,7 @@ export default function HealthPage() {
                   const isLast = i === weightRecords.slice(-8).length - 1;
                   return (
                     <div key={r.id} className="flex-1 flex flex-col items-center gap-1" title={`${r.weight}kg — ${formatDate(r.date)}`}>
-                      <div style={{ height: barH }} className={`w-full rounded-t-md transition-all ${isLast ? 'bg-orange-500' : 'bg-gray-200'}`}></div>
+                      <div style={{ height: barH }} className={`w-full rounded-t-md transition-all ${isLast ? 'bg-teal-500' : 'bg-teal-100'}`}></div>
                     </div>
                   );
                 })}
@@ -169,11 +199,11 @@ export default function HealthPage() {
 
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-3 mb-5">
-          <select value={selectedPet} onChange={e => setSelectedPet(e.target.value)} className="flex-1 px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 cursor-pointer shadow-sm">
+          <select value={selectedPet} onChange={e => setSelectedPet(e.target.value)} className="flex-1 px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-200 cursor-pointer shadow-sm">
             <option value="all">Todos os pets</option>
             {pets.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
-          <select value={selectedType} onChange={e => setSelectedType(e.target.value)} className="flex-1 px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 cursor-pointer shadow-sm">
+          <select value={selectedType} onChange={e => setSelectedType(e.target.value)} className="flex-1 px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-200 cursor-pointer shadow-sm">
             <option value="all">Todos os tipos</option>
             {typeOptions.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
           </select>
@@ -181,17 +211,24 @@ export default function HealthPage() {
 
         {/* Records */}
         {filtered.length === 0 ? (
-          <div className="bg-white rounded-xl p-10 border border-gray-100 text-center shadow-sm">
-            <div className="w-14 h-14 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-              <i className="ri-heart-pulse-line text-gray-300 text-2xl"></i>
+          <div className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
+            <div className="relative h-44">
+              <img
+                src="https://images.unsplash.com/photo-1628009368231-7bb7cfcb0def?w=800&h=300&fit=crop&crop=center"
+                alt="Saúde"
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-white via-white/20 to-transparent"></div>
             </div>
-            <p className="text-gray-500 text-sm font-medium">Nenhum registro de saúde encontrado.</p>
-            <p className="text-gray-400 text-xs mt-1">Registre consultas, vacinas e pesagens dos seus pets</p>
-            {pets.length > 0 && (
-              <button onClick={openAdd} className="inline-flex items-center gap-2 mt-5 px-5 py-2.5 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold rounded-lg cursor-pointer whitespace-nowrap transition-colors">
-                <i className="ri-add-line"></i> Adicionar registro
-              </button>
-            )}
+            <div className="p-8 text-center -mt-8 relative">
+              <h3 className="text-gray-800 font-bold text-lg mb-1">Nenhum registro encontrado</h3>
+              <p className="text-gray-400 text-sm mb-5">Registre consultas, vacinas e pesagens dos seus pets</p>
+              {pets.length > 0 && (
+                <button onClick={openAdd} className="inline-flex items-center gap-2 px-6 py-2.5 bg-teal-500 hover:bg-teal-600 text-white text-sm font-semibold rounded-xl cursor-pointer whitespace-nowrap transition-colors shadow-sm">
+                  <i className="ri-add-line"></i> Adicionar primeiro registro
+                </button>
+              )}
+            </div>
           </div>
         ) : (
           <div className="space-y-2">
@@ -202,12 +239,12 @@ export default function HealthPage() {
               const isExpanded = expandedRecord === h.id;
 
               return (
-                <div key={h.id} className={`bg-white rounded-xl border ${colors.border} overflow-hidden shadow-sm hover:shadow-md transition-shadow`}>
+                <div key={h.id} className={`bg-white rounded-2xl border ${colors.border} overflow-hidden shadow-sm hover:shadow-md transition-shadow`}>
                   <div
                     className="flex items-start gap-3 p-4 cursor-pointer"
                     onClick={() => setExpandedRecord(isExpanded ? null : h.id)}
                   >
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${colors.bg}`}>
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${colors.bg}`}>
                       <i className={`${typeOpt.icon} text-base ${colors.text}`}></i>
                     </div>
                     <div className="flex-1 min-w-0">
@@ -262,7 +299,7 @@ export default function HealthPage() {
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Pet *</label>
-                <select value={form.petId} onChange={e => setForm({...form, petId: e.target.value})} required className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 cursor-pointer">
+                <select value={form.petId} onChange={e => setForm({...form, petId: e.target.value})} required className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-200 cursor-pointer">
                   <option value="">Selecione o pet</option>
                   {pets.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
@@ -275,10 +312,10 @@ export default function HealthPage() {
                       key={t.value}
                       type="button"
                       onClick={() => setForm({...form, type: t.value})}
-                      className={`flex items-center gap-2 p-2.5 rounded-xl border-2 transition-all cursor-pointer ${form.type === t.value ? 'border-orange-400 bg-orange-50' : 'border-gray-100 hover:border-orange-200 bg-white'}`}
+                      className={`flex items-center gap-2 p-2.5 rounded-xl border-2 transition-all cursor-pointer ${form.type === t.value ? 'border-teal-400 bg-teal-50' : 'border-gray-100 hover:border-teal-200 bg-white'}`}
                     >
-                      <i className={`${t.icon} text-sm ${form.type === t.value ? 'text-orange-600' : 'text-gray-400'}`}></i>
-                      <span className={`text-xs font-medium ${form.type === t.value ? 'text-orange-600' : 'text-gray-500'}`}>{t.label}</span>
+                      <i className={`${t.icon} text-sm ${form.type === t.value ? 'text-teal-600' : 'text-gray-400'}`}></i>
+                      <span className={`text-xs font-medium ${form.type === t.value ? 'text-teal-600' : 'text-gray-500'}`}>{t.label}</span>
                     </button>
                   ))}
                 </div>
@@ -286,28 +323,28 @@ export default function HealthPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Data *</label>
-                  <input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} required className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 cursor-pointer" />
+                  <input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} required className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-200 cursor-pointer" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Peso (kg)</label>
-                  <input type="number" step="0.1" min="0" value={form.weight || ''} onChange={e => setForm({...form, weight: parseFloat(e.target.value) || undefined})} placeholder="Ex: 28.5" className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-200" />
+                  <input type="number" step="0.1" min="0" value={form.weight || ''} onChange={e => setForm({...form, weight: parseFloat(e.target.value) || undefined})} placeholder="Ex: 28.5" className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-200" />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Veterinário</label>
-                <input type="text" value={form.vet} onChange={e => setForm({...form, vet: e.target.value})} placeholder="Nome do veterinário" className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-200" />
+                <input type="text" value={form.vet} onChange={e => setForm({...form, vet: e.target.value})} placeholder="Nome do veterinário" className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-200" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Clínica / Hospital</label>
-                <input type="text" value={form.clinic} onChange={e => setForm({...form, clinic: e.target.value})} placeholder="Nome da clínica" className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-200" />
+                <input type="text" value={form.clinic} onChange={e => setForm({...form, clinic: e.target.value})} placeholder="Nome da clínica" className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-200" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Observações</label>
-                <textarea value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} rows={3} maxLength={500} placeholder="Diagnóstico, medicamentos, recomendações..." className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 resize-none" />
+                <textarea value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} rows={3} maxLength={500} placeholder="Diagnóstico, medicamentos, recomendações..." className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-200 resize-none" />
               </div>
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setShowForm(false)} className="flex-1 py-2.5 border border-gray-200 text-gray-600 font-medium rounded-xl text-sm hover:bg-gray-50 cursor-pointer whitespace-nowrap">Cancelar</button>
-                <button type="submit" className="flex-1 py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-xl text-sm transition-colors cursor-pointer whitespace-nowrap">
+                <button type="submit" className="flex-1 py-2.5 bg-teal-500 hover:bg-teal-600 text-white font-semibold rounded-xl text-sm transition-colors cursor-pointer whitespace-nowrap">
                   {editingId ? 'Salvar' : 'Adicionar registro'}
                 </button>
               </div>
