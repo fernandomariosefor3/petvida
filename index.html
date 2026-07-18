@@ -3,14 +3,23 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>PetVida Care — App de Saúde e Cuidados para Pets | Lembretes e Histórico Veterinário</title>
     <meta name="description" content="PetVida é o app completo para cuidar dos seus pets. Cadastre animais, configure lembretes de vacinas e consultas, e mantenha o histórico de saúde dos seus pets organizado em um só lugar." />
     <meta name="keywords" content="cuidados com pets, lembrete vacina pet, histórico saúde animal, app tutor de pets, consulta veterinária" />
     <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
     <meta name="author" content="PetVida Care" />
     <link rel="canonical" href="https://petvida.net.br/" />
-    <meta name="theme-color" content="#10b981" />
+
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#10B981" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="PetVida" />
+    <meta name="application-name" content="PetVida Care" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="msapplication-TileColor" content="#10B981" />
+    <meta name="msapplication-tap-highlight" content="no" />
 
     <!-- Open Graph / Social -->
     <meta property="og:type" content="website" />
@@ -25,6 +34,15 @@
     <meta name="twitter:title" content="PetVida Care — App de Saúde e Cuidados para Pets" />
     <meta name="twitter:description" content="Gerencie vacinas, consultas e o histórico de saúde dos seus animais de estimação com facilidade." />
 
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-192.png" />
+
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -33,5 +51,20 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+              console.log('SW registered:', registration.scope);
+            })
+            .catch((error) => {
+              console.log('SW registration failed:', error);
+            });
+        });
+      }
+    </script>
   </body>
 </html>

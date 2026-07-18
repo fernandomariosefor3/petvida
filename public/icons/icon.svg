@@ -1,0 +1,37 @@
+<!-- 
+  PetVida PWA Icon Template
+  
+  Para gerar os ícones PNG, use uma ferramenta como:
+  - https://realfavicongenerator.net/
+  - https://www.favicon.cc/
+  - Ou qualquer editor de imagem que suporte SVG
+  
+  Tamanhos necessários:
+  - 72x72
+  - 96x96
+  - 128x128
+  - 144x144
+  - 152x152
+  - 192x192
+  - 384x384
+  - 512x512
+-->
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="256" fill="#10B981"/>
+  
+  <!-- Paw print -->
+  <g fill="white">
+    <!-- Main pad -->
+    <ellipse cx="256" cy="300" rx="80" ry="65"/>
+    
+    <!-- Top pads -->
+    <ellipse cx="180" cy="200" rx="35" ry="30"/>
+    <ellipse cx="256" cy="160" rx="35" ry="30"/>
+    <ellipse cx="332" cy="200" rx="35" ry="30"/>
+    
+    <!-- Small pads -->
+    <ellipse cx="140" cy="270" rx="25" ry="22"/>
+    <ellipse cx="372" cy="270" rx="25" ry="22"/>
+  </g>
+</svg>

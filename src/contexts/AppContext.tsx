@@ -1,25 +1,31 @@
 import { createContext, useContext, ReactNode } from 'react';
 import { AuthProvider, useAuth } from '@/contexts/auth/AuthContext';
 import { DataProvider, useData } from '@/contexts/data/DataContext';
-import { PLAN_LIMITS } from '@/types';
-
-function checkPlanActive(plan: string, expiresAt: string): boolean {
-  if (plan === 'free' || !expiresAt) return false;
-  return new Date(expiresAt) > new Date();
-}
+import { isPlanActive, getCurrentPlan, canAddPet } from '@/lib/plans';
 
 const AppContext = createContext<ReturnType<typeof useAppValue> | null>(null);
 
 function useAppValue() {
   const auth = useAuth();
   const data = useData();
-  const isPremium = auth.currentUser
-    ? checkPlanActive(auth.currentUser.plan, auth.currentUser.planExpiresAt)
+  
+  const planActive = auth.currentUser
+    ? isPlanActive(auth.currentUser.plan, auth.currentUser.planExpiresAt)
     : false;
-  const planLimits = isPremium ? PLAN_LIMITS.premium : PLAN_LIMITS.free;
-  const canAddPet = data.pets.length < planLimits.maxPets;
-  const canUploadPhoto = planLimits.photoUpload;
-  return { ...auth, ...data, isPremium, planLimits, canAddPet, canUploadPhoto };
+  
+  const currentPlan = planActive ? getCurrentPlan('premium') : getCurrentPlan('free');
+  const canAdd = auth.currentUser ? canAddPet(data.pets.length, auth.currentUser.plan) : false;
+  
+  return {
+    ...auth,
+    ...data,
+    isPremium: planActive,
+    currentPlan,
+    canAddPet: canAdd,
+    canUploadPhoto: currentPlan.limits.photoUpload,
+    canExportData: currentPlan.limits.exportData,
+    maxPets: currentPlan.limits.maxPets,
+  };
 }
 
 function AppContextBridge({ children }: { children: ReactNode }) {

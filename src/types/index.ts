@@ -1,3 +1,6 @@
+// Re-export types from plans lib
+export type { PlanId } from '@/lib/plans';
+
 export type Plan = 'free' | 'premium';
 
 export interface User {
@@ -8,6 +11,10 @@ export interface User {
   plan: Plan;
   planExpiresAt: string;
   createdAt: string;
+  // Stripe related fields
+  subscriptionId?: string;
+  customerId?: string;
+  planUpgradedAt?: string;
 }
 
 export interface Pet {
@@ -56,7 +63,7 @@ export interface HealthRecord {
   createdAt: string;
 }
 
-// Plan limits
+// Legacy - use PLANS from lib/plans instead
 export const PLAN_LIMITS = {
   free: {
     maxPets: 3,
