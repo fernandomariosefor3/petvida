@@ -315,9 +315,9 @@ export default function RegistrationPage() {
 
           <p className="text-center text-gray-400 text-xs mt-6">
             Ao continuar, você concorda com nossos{' '}
-            <a href="#" className="text-orange-500 hover:underline">Termos de Uso</a>
+            <a href="/termos" className="text-orange-500 hover:underline">Termos de Uso</a>
             {' '}e{' '}
-            <a href="#" className="text-orange-500 hover:underline">Política de Privacidade</a>
+            <a href="/privacidade" className="text-orange-500 hover:underline">Política de Privacidade</a>
           </p>
           <div className="text-center mt-4">
             <Link to="/" className="text-sm text-gray-400 hover:text-gray-600 transition-colors cursor-pointer">

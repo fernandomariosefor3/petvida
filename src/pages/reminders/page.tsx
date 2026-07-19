@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
 import { Reminder } from '@/types';
+import NotificationBanner from '@/components/feature/NotificationBanner';
 
 type ReminderFormData = Omit<Reminder, 'id' | 'userId' | 'createdAt' | 'completed'>;
 
@@ -26,6 +28,14 @@ const defaultForm: ReminderFormData = {
 
 type FilterType = 'all' | 'pending' | 'completed' | 'overdue';
 
+const Paw = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
+    <ellipse cx="6" cy="7" rx="2" ry="2.5"/><ellipse cx="11" cy="5" rx="2" ry="2.5"/>
+    <ellipse cx="16" cy="7" rx="2" ry="2.5"/><ellipse cx="18.5" cy="12" rx="1.5" ry="2"/>
+    <path d="M12 10c-3.5 0-7 2.5-7 6 0 2.5 2 4 4 4h6c2 0 4-1.5 4-4 0-3.5-3.5-6-7-6z"/>
+  </svg>
+);
+
 export default function RemindersPage() {
   const { currentUser, pets, reminders, addReminder, updateReminder, deleteReminder, toggleReminder, getPetById } = useApp();
   const [showForm, setShowForm] = useState(false);
@@ -34,6 +44,8 @@ export default function RemindersPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [filter, setFilter] = useState<FilterType>('all');
   const [search, setSearch] = useState('');
+  const [searchParams] = useSearchParams();
+  const highlightId = searchParams.get('highlight');
 
   if (!currentUser) return null;
 
@@ -106,35 +118,56 @@ export default function RemindersPage() {
     { key: 'completed', label: 'Concluídos', count: completedCount },
   ];
 
+  const getPetPhoto = (petId: string) => {
+    const pet = getPetById(petId);
+    if (!pet) return 'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=80&h=80&fit=crop&auto=format';
+    if (pet.photo) return pet.photo;
+    if (pet.species === 'Gato') return 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=80&h=80&fit=crop&auto=format';
+    if (pet.species === 'Pássaro') return 'https://images.unsplash.com/photo-1444464666168-49d633b86797?w=80&h=80&fit=crop&auto=format';
+    if (pet.species === 'Coelho') return 'https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?w=80&h=80&fit=crop&auto=format';
+    return 'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=80&h=80&fit=crop&auto=format';
+  };
+
   return (
     <div className="flex-1 overflow-y-auto bg-gray-50">
-
-      {/* Hero Header with real photo */}
-      <div className="relative h-44 overflow-hidden">
-        <img
-          src="https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=1200&h=300&fit=crop&crop=center"
-          alt="Lembretes"
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-violet-900/80 via-violet-800/60 to-transparent"></div>
-        <div className="absolute inset-0 flex items-end p-6 justify-between">
+      {/* Header colorido */}
+      <div className="relative overflow-hidden" style={{ minHeight: 180 }}>
+        <img src="https://images.unsplash.com/photo-1530281700549-e82e7bf110d6?w=1200&h=360&fit=crop&auto=format" alt="" className="absolute inset-0 w-full h-full object-cover" />
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg,rgba(5,150,105,0.83) 0%,rgba(16,185,129,0.73) 50%,rgba(13,148,136,0.68) 100%)' }} />
+        <Paw className="absolute top-2 left-4 w-14 h-14 text-white opacity-20" />
+        <Paw className="absolute bottom-3 left-20 w-8 h-8 text-white opacity-25" />
+        <Paw className="absolute top-4 left-32 w-6 h-6 text-white opacity-15" />
+        <div className="absolute right-4 bottom-0 top-0 flex items-center gap-2">
+          <img src="https://images.unsplash.com/photo-1601758003122-53c40e686a19?w=100&h=100&fit=crop&auto=format" alt="" className="w-12 h-12 rounded-full object-cover border-2 border-white/60 shadow-lg" />
+          <img src="https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=100&h=100&fit=crop&auto=format" alt="" className="w-16 h-16 rounded-full object-cover border-2 border-white/60 shadow-lg" />
+          <img src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=100&h=100&fit=crop&auto=format" alt="" className="w-10 h-10 rounded-full object-cover border-2 border-white/60 shadow-lg" />
+        </div>
+        <div className="relative z-10 px-6 py-8 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-white drop-shadow">Lembretes</h1>
-            <p className="text-violet-100 text-sm mt-0.5">
-              {pendingCount} pendente{pendingCount !== 1 ? 's' : ''}{overdueCount > 0 ? ` · ${overdueCount} atrasado${overdueCount > 1 ? 's' : ''}` : ''}
-            </p>
+            <h1 className="text-2xl font-bold text-white">Lembretes</h1>
+            <p className="text-emerald-100 text-sm mt-0.5">{pendingCount} pendente{pendingCount !== 1 ? 's' : ''}{overdueCount > 0 ? ` • ${overdueCount} atrasado${overdueCount > 1 ? 's' : ''}` : ''}</p>
           </div>
           <button
             onClick={openAdd}
             disabled={pets.length === 0}
-            className="flex items-center gap-2 px-5 py-2.5 bg-white hover:bg-gray-50 disabled:bg-white/40 disabled:text-white/60 disabled:cursor-not-allowed text-violet-700 font-semibold rounded-xl text-sm shadow-lg transition-all cursor-pointer whitespace-nowrap"
+            className="flex items-center gap-2 px-5 py-2.5 bg-white text-emerald-700 hover:bg-emerald-50 disabled:bg-white/50 disabled:text-emerald-300 disabled:cursor-not-allowed font-semibold rounded-xl text-sm transition-colors cursor-pointer whitespace-nowrap shadow-sm"
           >
             <i className="ri-add-line"></i> Novo lembrete
           </button>
         </div>
       </div>
 
+      {/* Faixa decorativa */}
+      <div className="flex gap-0 overflow-hidden" style={{ height: 80 }}>
+        <img src="https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=300&h=160&fit=crop&auto=format" alt="" className="flex-1 object-cover object-center opacity-70" />
+        <img src="https://images.unsplash.com/photo-1561037404-61cd46aa615b?w=300&h=160&fit=crop&auto=format" alt="" className="flex-1 object-cover object-center opacity-70" />
+        <img src="https://images.unsplash.com/photo-1574158622682-e40e69881006?w=300&h=160&fit=crop&auto=format" alt="" className="flex-1 object-cover object-center opacity-70" />
+        <img src="https://images.unsplash.com/photo-1450778869180-41d0601e046e?w=300&h=160&fit=crop&auto=format" alt="" className="flex-1 object-cover object-center opacity-70 hidden sm:block" />
+      </div>
+
       <div className="p-6 max-w-4xl mx-auto">
+
+        <NotificationBanner userId={currentUser.id} />
 
         {pets.length === 0 && (
           <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4 mb-6 flex items-center gap-3">
@@ -195,8 +228,11 @@ export default function RemindersPage() {
               const colors = typeColorMap[r.type];
               const daysLabel = getDaysLabel(r.date, r.completed);
 
+              const isHighlighted = r.id === highlightId;
               return (
-                <div key={r.id} className={`bg-white rounded-2xl border p-4 transition-all ${r.completed ? 'border-gray-100 opacity-60' : 'border-gray-100 hover:border-emerald-200'}`}>
+                <div key={r.id}
+                  ref={isHighlighted ? (el) => el?.scrollIntoView({ behavior: 'smooth', block: 'center' }) : undefined}
+                  className={`bg-white rounded-2xl border p-4 transition-all ${isHighlighted ? 'border-emerald-400 ring-2 ring-emerald-200' : r.completed ? 'border-gray-100 opacity-60' : 'border-gray-100 hover:border-emerald-200'}`}>
                   <div className="flex items-start gap-3">
                     {/* Checkbox */}
                     <button
@@ -205,6 +241,11 @@ export default function RemindersPage() {
                     >
                       {r.completed && <i className="ri-check-line text-white text-xs"></i>}
                     </button>
+
+                    {/* Pet photo */}
+                    <div className="w-9 h-9 rounded-xl overflow-hidden flex-shrink-0 border border-gray-100">
+                      <img src={getPetPhoto(r.petId)} alt="" className="w-full h-full object-cover" />
+                    </div>
 
                     {/* Icon */}
                     <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${colors.bg}`}>

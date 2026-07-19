@@ -3,21 +3,78 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    function userDoc(uid) {
+      return get(/databases/$(database)/documents/users/$(uid)).data;
+    }
+
+    // Fails open (allows the write) when petLimit hasn't been backfilled yet
+    // for this user — see scripts/migrate-user-plan-fields.mjs. Once backfilled,
+    // this enforces the plan's pet quota server-side.
+    function withinPetLimit(uid) {
+      let u = userDoc(uid);
+      return !('petLimit' in u) || u.petLimit == -1 || u.petCount < u.petLimit;
+    }
+
+    function withinReminderLimit(uid, petId) {
+      let u = userDoc(uid);
+      let p = get(/databases/$(database)/documents/pets/$(petId)).data;
+      return !('reminderLimitPerPet' in u) || u.reminderLimitPerPet == -1
+        || !('reminderCount' in p) || p.reminderCount < u.reminderLimitPerPet;
+    }
+
+    match /plans/{planId} {
+      allow read: if true;
+      allow write: if false; // managed by scripts/seed-plans.mjs via the Admin SDK
+    }
+
+    match /paymentEvents/{eventId} {
+      allow read, write: if false; // audit log written by the Stripe webhook (Admin SDK only)
+    }
+
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if request.auth != null && (
+        request.auth.uid == userId ||
+        request.auth.token.email == 'fernandomariodasmartins@gmail.com'
+      );
+
+      // Self-registration only ever creates a free-tier profile; any other
+      // plan must be granted by the admin or the Stripe webhook (Admin SDK).
+      allow create: if request.auth != null && (
+        (request.auth.uid == userId && request.resource.data.plan == 'free' && request.resource.data.planExpiresAt == '')
+        || request.auth.token.email == 'fernandomariodasmartins@gmail.com'
+      );
+
+      // Users may update their own profile fields, but not the plan/quota
+      // fields — those are server-managed (Stripe webhook, admin panel,
+      // onUserPlanChangedSyncLimits Cloud Function).
+      allow update: if request.auth != null && (
+        (request.auth.uid == userId && !request.resource.data.diff(resource.data).affectedKeys()
+          .hasAny(['plan', 'planExpiresAt', 'petLimit', 'reminderLimitPerPet', 'petCount',
+                   'paymentFailedAt', 'stripeCustomerId', 'stripeSubscriptionId']))
+        || request.auth.token.email == 'fernandomariodasmartins@gmail.com'
+      );
+
+      match /fcmTokens/{token} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
     }
 
     match /pets/{petId} {
       allow read, delete: if request.auth != null && request.auth.uid == resource.data.userId;
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+      allow create: if request.auth != null
+        && request.auth.uid == request.resource.data.userId
+        && withinPetLimit(request.auth.uid);
       allow update: if request.auth != null
         && request.auth.uid == resource.data.userId
-        && request.auth.uid == request.resource.data.userId;
+        && request.auth.uid == request.resource.data.userId
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['reminderCount']);
     }
 
     match /reminders/{reminderId} {
       allow read, delete: if request.auth != null && request.auth.uid == resource.data.userId;
-      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+      allow create: if request.auth != null
+        && request.auth.uid == request.resource.data.userId
+        && withinReminderLimit(request.auth.uid, request.resource.data.petId);
       allow update: if request.auth != null
         && request.auth.uid == resource.data.userId
         && request.auth.uid == request.resource.data.userId;

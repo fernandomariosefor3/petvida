@@ -1,0 +1,19 @@
+node_modules/
+dist/
+.env
+.env.*
+.firebase/
+firebase-debug.log
+firebase-debug.*.log
+*.local
+functions/node_modules/
+functions/lib/
+.DS_Store
+Thumbs.db
+
+# Stray 0-byte files from a broken shell command in an earlier session
+JSON.stringify({
+console.error(e))
+console.log('
+console.log('container
+console.log(JSON.stringify(d

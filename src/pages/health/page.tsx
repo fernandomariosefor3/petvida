@@ -27,24 +27,13 @@ const defaultForm: HealthFormData = {
   attachmentUrl: '',
 };
 
-const statCards = (healthRecords: HealthRecord[]) => [
-  {
-    label: 'Total de Registros', value: healthRecords.length, icon: 'ri-clipboard-line', type: 'all',
-    gradient: 'from-teal-500 to-cyan-400', iconBg: 'bg-white/20',
-  },
-  {
-    label: 'Consultas', value: healthRecords.filter(h => h.type === 'appointment').length, icon: 'ri-stethoscope-line', type: 'appointment',
-    gradient: 'from-amber-500 to-orange-400', iconBg: 'bg-white/20',
-  },
-  {
-    label: 'Vacinas', value: healthRecords.filter(h => h.type === 'vaccine').length, icon: 'ri-syringe-line', type: 'vaccine',
-    gradient: 'from-emerald-500 to-green-400', iconBg: 'bg-white/20',
-  },
-  {
-    label: 'Pesagens', value: healthRecords.filter(h => h.type === 'weight').length, icon: 'ri-scales-line', type: 'weight',
-    gradient: 'from-indigo-500 to-violet-400', iconBg: 'bg-white/20',
-  },
-];
+const Paw = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
+    <ellipse cx="6" cy="7" rx="2" ry="2.5"/><ellipse cx="11" cy="5" rx="2" ry="2.5"/>
+    <ellipse cx="16" cy="7" rx="2" ry="2.5"/><ellipse cx="18.5" cy="12" rx="1.5" ry="2"/>
+    <path d="M12 10c-3.5 0-7 2.5-7 6 0 2.5 2 4 4 4h6c2 0 4-1.5 4-4 0-3.5-3.5-6-7-6z"/>
+  </svg>
+);
 
 export default function HealthPage() {
   const { currentUser, pets, healthRecords, addHealthRecord, updateHealthRecord, deleteHealthRecord, getPetById } = useApp();
@@ -97,52 +86,76 @@ export default function HealthPage() {
   const weightDiff = latestWeight && prevWeight && latestWeight.weight && prevWeight.weight
     ? (latestWeight.weight - prevWeight.weight).toFixed(1) : null;
 
-  const cards = statCards(healthRecords);
+  const statCards = [
+    { label: 'Total', value: healthRecords.length, icon: 'ri-clipboard-line', type: 'all', color: 'text-teal-600', bg: 'bg-teal-50' },
+    { label: 'Consultas', value: healthRecords.filter(h => h.type === 'appointment').length, icon: 'ri-stethoscope-line', type: 'appointment', color: 'text-amber-600', bg: 'bg-amber-50' },
+    { label: 'Vacinas', value: healthRecords.filter(h => h.type === 'vaccine').length, icon: 'ri-syringe-line', type: 'vaccine', color: 'text-emerald-600', bg: 'bg-emerald-50' },
+    { label: 'Pesagens', value: healthRecords.filter(h => h.type === 'weight').length, icon: 'ri-scales-line', type: 'weight', color: 'text-indigo-600', bg: 'bg-indigo-50' },
+  ];
+
+  const getPetPhoto = (petId: string) => {
+    const pet = getPetById(petId);
+    if (!pet) return 'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=80&h=80&fit=crop&auto=format';
+    if (pet.photo) return pet.photo;
+    if (pet.species === 'Gato') return 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=80&h=80&fit=crop&auto=format';
+    if (pet.species === 'Pássaro') return 'https://images.unsplash.com/photo-1444464666168-49d633b86797?w=80&h=80&fit=crop&auto=format';
+    if (pet.species === 'Coelho') return 'https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?w=80&h=80&fit=crop&auto=format';
+    return 'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=80&h=80&fit=crop&auto=format';
+  };
 
   return (
-    <div className="flex-1 overflow-y-auto bg-gray-50">
-
-      {/* Hero Header with real photo */}
-      <div className="relative h-44 overflow-hidden">
-        <img
-          src="https://images.unsplash.com/photo-1628009368231-7bb7cfcb0def?w=1200&h=300&fit=crop&crop=center"
-          alt="Saúde dos pets"
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-teal-900/75 via-teal-800/60 to-transparent"></div>
-        <div className="absolute inset-0 flex items-end p-6 justify-between">
+    <div className="flex-1 overflow-y-auto bg-slate-50">
+      {/* Header colorido */}
+      <div className="relative overflow-hidden" style={{ minHeight: 180 }}>
+        <img src="https://images.unsplash.com/photo-1596492784531-6e6eb5ea9993?w=1200&h=360&fit=crop&auto=format" alt="" className="absolute inset-0 w-full h-full object-cover" />
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg,rgba(234,88,12,0.83) 0%,rgba(239,68,68,0.75) 50%,rgba(236,72,153,0.68) 100%)' }} />
+        <Paw className="absolute top-2 left-4 w-14 h-14 text-white opacity-20" />
+        <Paw className="absolute bottom-3 left-20 w-8 h-8 text-white opacity-25" />
+        <Paw className="absolute top-4 left-32 w-6 h-6 text-white opacity-15" />
+        <div className="absolute right-4 bottom-0 top-0 flex items-center gap-2">
+          <img src="https://images.unsplash.com/photo-1574158622682-e40e69881006?w=100&h=100&fit=crop&auto=format" alt="" className="w-12 h-12 rounded-full object-cover border-2 border-white/60 shadow-lg" />
+          <img src="https://images.unsplash.com/photo-1548199973-03cce0bbc87b?w=100&h=100&fit=crop&auto=format" alt="" className="w-16 h-16 rounded-full object-cover border-2 border-white/60 shadow-lg" />
+          <img src="https://images.unsplash.com/photo-1601758003122-53c40e686a19?w=100&h=100&fit=crop&auto=format" alt="" className="w-10 h-10 rounded-full object-cover border-2 border-white/60 shadow-lg" />
+        </div>
+        <div className="relative z-10 px-6 py-8 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-white drop-shadow">Saúde</h1>
-            <p className="text-teal-100 text-sm mt-0.5">
-              {healthRecords.length} registro{healthRecords.length !== 1 ? 's' : ''} · histórico completo dos seus pets
-            </p>
+            <h1 className="text-2xl font-bold text-white">Saúde</h1>
+            <p className="text-orange-100 text-sm mt-0.5">{healthRecords.length} registro{healthRecords.length !== 1 ? 's' : ''}</p>
           </div>
           <button
             onClick={openAdd}
             disabled={pets.length === 0}
-            className="flex items-center gap-2 px-5 py-2.5 bg-white hover:bg-gray-50 disabled:bg-white/40 disabled:text-white/60 disabled:cursor-not-allowed text-teal-700 font-semibold rounded-xl text-sm shadow-lg transition-all cursor-pointer whitespace-nowrap"
+            className="flex items-center gap-2 px-5 py-2.5 bg-white text-orange-600 hover:bg-orange-50 disabled:bg-white/50 disabled:text-orange-300 disabled:cursor-not-allowed font-semibold rounded-xl text-sm transition-all cursor-pointer whitespace-nowrap shadow-sm"
           >
             <i className="ri-add-line"></i> Novo registro
           </button>
         </div>
       </div>
 
+      {/* Faixa decorativa */}
+      <div className="flex gap-0 overflow-hidden" style={{ height: 80 }}>
+        <img src="https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=300&h=160&fit=crop&auto=format" alt="" className="flex-1 object-cover object-center opacity-70" />
+        <img src="https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=300&h=160&fit=crop&auto=format" alt="" className="flex-1 object-cover object-center opacity-70" />
+        <img src="https://images.unsplash.com/photo-1561037404-61cd46aa615b?w=300&h=160&fit=crop&auto=format" alt="" className="flex-1 object-cover object-center opacity-70" />
+        <img src="https://images.unsplash.com/photo-1450778869180-41d0601e046e?w=300&h=160&fit=crop&auto=format" alt="" className="flex-1 object-cover object-center opacity-70 hidden sm:block" />
+      </div>
+
       <div className="p-6 max-w-5xl mx-auto">
 
-        {/* Stat Cards */}
+        {/* Summary cards */}
         {pets.length > 0 && (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6 -mt-8 relative z-10">
-            {cards.map(stat => (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            {statCards.map(stat => (
               <button
                 key={stat.label}
                 onClick={() => setSelectedType(selectedType === stat.type ? 'all' : stat.type)}
-                className={`bg-gradient-to-br ${stat.gradient} rounded-2xl p-4 text-left transition-all cursor-pointer hover:shadow-lg hover:scale-[1.02] shadow-md ${selectedType === stat.type ? 'ring-2 ring-white ring-offset-2 scale-[1.02]' : ''}`}
+                className={`bg-white rounded-xl p-4 border text-left transition-all cursor-pointer hover:shadow-sm ${selectedType === stat.type ? 'border-orange-200 shadow-sm' : 'border-gray-100'}`}
               >
-                <div className={`w-9 h-9 ${stat.iconBg} rounded-xl flex items-center justify-center mb-3`}>
-                  <i className={`${stat.icon} text-base text-white`}></i>
+                <div className={`w-9 h-9 rounded-lg flex items-center justify-center mb-3 ${stat.bg}`}>
+                  <i className={`${stat.icon} text-base ${stat.color}`}></i>
                 </div>
-                <p className="text-3xl font-bold text-white">{stat.value}</p>
-                <p className="text-xs text-white/80 mt-0.5 font-medium">{stat.label}</p>
+                <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+                <p className="text-xs text-gray-400 mt-0.5">{stat.label}</p>
               </button>
             ))}
           </div>
@@ -150,14 +163,9 @@ export default function HealthPage() {
 
         {/* Weight tracker */}
         {weightRecords.length > 0 && (
-          <div className="bg-white rounded-2xl border border-gray-100 p-5 mb-6 shadow-sm">
+          <div className="bg-white rounded-xl border border-gray-100 p-5 mb-6 shadow-sm">
             <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-teal-50 rounded-lg flex items-center justify-center">
-                  <i className="ri-scales-line text-teal-500 text-sm"></i>
-                </div>
-                <h2 className="font-semibold text-gray-800 text-sm">Evolução do Peso</h2>
-              </div>
+              <h2 className="font-semibold text-gray-800 text-sm">Evolução do Peso</h2>
               {pets.length > 1 && (
                 <select value={weightPetId} onChange={e => setSelectedPet(e.target.value)} className="text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none bg-white cursor-pointer">
                   {pets.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -188,7 +196,7 @@ export default function HealthPage() {
                   const isLast = i === weightRecords.slice(-8).length - 1;
                   return (
                     <div key={r.id} className="flex-1 flex flex-col items-center gap-1" title={`${r.weight}kg — ${formatDate(r.date)}`}>
-                      <div style={{ height: barH }} className={`w-full rounded-t-md transition-all ${isLast ? 'bg-teal-500' : 'bg-teal-100'}`}></div>
+                      <div style={{ height: barH }} className={`w-full rounded-t-md transition-all ${isLast ? 'bg-orange-500' : 'bg-gray-200'}`}></div>
                     </div>
                   );
                 })}
@@ -199,11 +207,11 @@ export default function HealthPage() {
 
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-3 mb-5">
-          <select value={selectedPet} onChange={e => setSelectedPet(e.target.value)} className="flex-1 px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-200 cursor-pointer shadow-sm">
+          <select value={selectedPet} onChange={e => setSelectedPet(e.target.value)} className="flex-1 px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 cursor-pointer shadow-sm">
             <option value="all">Todos os pets</option>
             {pets.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
           </select>
-          <select value={selectedType} onChange={e => setSelectedType(e.target.value)} className="flex-1 px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-200 cursor-pointer shadow-sm">
+          <select value={selectedType} onChange={e => setSelectedType(e.target.value)} className="flex-1 px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 cursor-pointer shadow-sm">
             <option value="all">Todos os tipos</option>
             {typeOptions.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
           </select>
@@ -211,24 +219,17 @@ export default function HealthPage() {
 
         {/* Records */}
         {filtered.length === 0 ? (
-          <div className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
-            <div className="relative h-44">
-              <img
-                src="https://images.unsplash.com/photo-1628009368231-7bb7cfcb0def?w=800&h=300&fit=crop&crop=center"
-                alt="Saúde"
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-white via-white/20 to-transparent"></div>
+          <div className="bg-white rounded-xl p-10 border border-gray-100 text-center shadow-sm">
+            <div className="w-14 h-14 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <i className="ri-heart-pulse-line text-gray-300 text-2xl"></i>
             </div>
-            <div className="p-8 text-center -mt-8 relative">
-              <h3 className="text-gray-800 font-bold text-lg mb-1">Nenhum registro encontrado</h3>
-              <p className="text-gray-400 text-sm mb-5">Registre consultas, vacinas e pesagens dos seus pets</p>
-              {pets.length > 0 && (
-                <button onClick={openAdd} className="inline-flex items-center gap-2 px-6 py-2.5 bg-teal-500 hover:bg-teal-600 text-white text-sm font-semibold rounded-xl cursor-pointer whitespace-nowrap transition-colors shadow-sm">
-                  <i className="ri-add-line"></i> Adicionar primeiro registro
-                </button>
-              )}
-            </div>
+            <p className="text-gray-500 text-sm font-medium">Nenhum registro de saúde encontrado.</p>
+            <p className="text-gray-400 text-xs mt-1">Registre consultas, vacinas e pesagens dos seus pets</p>
+            {pets.length > 0 && (
+              <button onClick={openAdd} className="inline-flex items-center gap-2 mt-5 px-5 py-2.5 bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold rounded-lg cursor-pointer whitespace-nowrap transition-colors">
+                <i className="ri-add-line"></i> Adicionar registro
+              </button>
+            )}
           </div>
         ) : (
           <div className="space-y-2">
@@ -239,12 +240,15 @@ export default function HealthPage() {
               const isExpanded = expandedRecord === h.id;
 
               return (
-                <div key={h.id} className={`bg-white rounded-2xl border ${colors.border} overflow-hidden shadow-sm hover:shadow-md transition-shadow`}>
+                <div key={h.id} className={`bg-white rounded-xl border ${colors.border} overflow-hidden shadow-sm hover:shadow-md transition-shadow`}>
                   <div
                     className="flex items-start gap-3 p-4 cursor-pointer"
                     onClick={() => setExpandedRecord(isExpanded ? null : h.id)}
                   >
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${colors.bg}`}>
+                    <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 border border-gray-100">
+                      <img src={getPetPhoto(h.petId)} alt="" className="w-full h-full object-cover" />
+                    </div>
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${colors.bg}`}>
                       <i className={`${typeOpt.icon} text-base ${colors.text}`}></i>
                     </div>
                     <div className="flex-1 min-w-0">
@@ -299,7 +303,7 @@ export default function HealthPage() {
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Pet *</label>
-                <select value={form.petId} onChange={e => setForm({...form, petId: e.target.value})} required className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-200 cursor-pointer">
+                <select value={form.petId} onChange={e => setForm({...form, petId: e.target.value})} required className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 cursor-pointer">
                   <option value="">Selecione o pet</option>
                   {pets.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
@@ -312,10 +316,10 @@ export default function HealthPage() {
                       key={t.value}
                       type="button"
                       onClick={() => setForm({...form, type: t.value})}
-                      className={`flex items-center gap-2 p-2.5 rounded-xl border-2 transition-all cursor-pointer ${form.type === t.value ? 'border-teal-400 bg-teal-50' : 'border-gray-100 hover:border-teal-200 bg-white'}`}
+                      className={`flex items-center gap-2 p-2.5 rounded-xl border-2 transition-all cursor-pointer ${form.type === t.value ? 'border-orange-400 bg-orange-50' : 'border-gray-100 hover:border-orange-200 bg-white'}`}
                     >
-                      <i className={`${t.icon} text-sm ${form.type === t.value ? 'text-teal-600' : 'text-gray-400'}`}></i>
-                      <span className={`text-xs font-medium ${form.type === t.value ? 'text-teal-600' : 'text-gray-500'}`}>{t.label}</span>
+                      <i className={`${t.icon} text-sm ${form.type === t.value ? 'text-orange-600' : 'text-gray-400'}`}></i>
+                      <span className={`text-xs font-medium ${form.type === t.value ? 'text-orange-600' : 'text-gray-500'}`}>{t.label}</span>
                     </button>
                   ))}
                 </div>
@@ -323,28 +327,28 @@ export default function HealthPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Data *</label>
-                  <input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} required className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-200 cursor-pointer" />
+                  <input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} required className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 cursor-pointer" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Peso (kg)</label>
-                  <input type="number" step="0.1" min="0" value={form.weight || ''} onChange={e => setForm({...form, weight: parseFloat(e.target.value) || undefined})} placeholder="Ex: 28.5" className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-200" />
+                  <input type="number" step="0.1" min="0" value={form.weight || ''} onChange={e => setForm({...form, weight: parseFloat(e.target.value) || undefined})} placeholder="Ex: 28.5" className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-200" />
                 </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Veterinário</label>
-                <input type="text" value={form.vet} onChange={e => setForm({...form, vet: e.target.value})} placeholder="Nome do veterinário" className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-200" />
+                <input type="text" value={form.vet} onChange={e => setForm({...form, vet: e.target.value})} placeholder="Nome do veterinário" className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-200" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Clínica / Hospital</label>
-                <input type="text" value={form.clinic} onChange={e => setForm({...form, clinic: e.target.value})} placeholder="Nome da clínica" className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-200" />
+                <input type="text" value={form.clinic} onChange={e => setForm({...form, clinic: e.target.value})} placeholder="Nome da clínica" className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-200" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Observações</label>
-                <textarea value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} rows={3} maxLength={500} placeholder="Diagnóstico, medicamentos, recomendações..." className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-teal-200 resize-none" />
+                <textarea value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} rows={3} maxLength={500} placeholder="Diagnóstico, medicamentos, recomendações..." className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 resize-none" />
               </div>
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setShowForm(false)} className="flex-1 py-2.5 border border-gray-200 text-gray-600 font-medium rounded-xl text-sm hover:bg-gray-50 cursor-pointer whitespace-nowrap">Cancelar</button>
-                <button type="submit" className="flex-1 py-2.5 bg-teal-500 hover:bg-teal-600 text-white font-semibold rounded-xl text-sm transition-colors cursor-pointer whitespace-nowrap">
+                <button type="submit" className="flex-1 py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-xl text-sm transition-colors cursor-pointer whitespace-nowrap">
                   {editingId ? 'Salvar' : 'Adicionar registro'}
                 </button>
               </div>

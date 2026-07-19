@@ -5,7 +5,8 @@ import {
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
-import { User, Plan } from '@/types';
+import { trackEvent } from '@/lib/analytics';
+import { User, Plan, NotificationSettings } from '@/types';
 
 interface AuthContextType {
   currentUser: User | null;
@@ -35,6 +36,8 @@ function mapUser(uid: string, data: Record<string, unknown>, fallbackEmail: stri
     plan: ((data.plan as Plan) ?? 'free'),
     planExpiresAt: tsToString(data.planExpiresAt),
     createdAt: tsToString(data.createdAt),
+    paymentFailedAt: data.paymentFailedAt ? tsToString(data.paymentFailedAt) : undefined,
+    notificationSettings: data.notificationSettings as NotificationSettings | undefined,
   };
 }
 
@@ -90,6 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await setDoc(doc(db, 'users', user.uid), {
         name, email, phone: '', plan: 'free', planExpiresAt: '', createdAt: serverTimestamp(),
       });
+      trackEvent('user_registered', { method: 'email' });
       return { error: null };
     } catch (err: unknown) {
       const code = (err as { code?: string }).code;

@@ -9,3 +9,11 @@ createRoot(document.getElementById('root')!).render(
     <App />
   </StrictMode>,
 )
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/firebase-messaging-sw.js').catch(() => {
+      // PWA offline support is a progressive enhancement — safe to ignore failures.
+    });
+  });
+}
