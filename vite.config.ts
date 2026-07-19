@@ -20,7 +20,7 @@ export default defineConfig({
             "Link", "NavLink", "Navigate", "Outlet"] },
         { "react-i18next": ["useTranslation", "Trans"] },
       ],
-      dts: true,
+      dts: "auto-imports.d.ts",
     }),
   ],
   build: { outDir: "dist", sourcemap: false },
