@@ -313,7 +313,7 @@ export default function FaqPage() {
               {WHATSAPP_DISPLAY}
             </a>
             <Link to="/faq" className="text-emerald-200 hover:text-white text-sm transition-colors">FAQ</Link>
-            <a href="#" className="text-emerald-200 hover:text-white text-sm transition-colors">Privacidade</a>
+            <a href="/privacidade" className="text-emerald-200 hover:text-white text-sm transition-colors">Privacidade</a>
           </div>
         </div>
       </footer>

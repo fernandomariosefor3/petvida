@@ -1,0 +1,59 @@
+node_modules/
+dist/
+dist-ssr/
+dev-dist/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Firebase
+.firebase/
+firebase-debug.log
+firebase-debug.*.log
+functions/node_modules/
+functions/lib/
+
+# Credentials / service accounts — never commit these
+*serviceAccount*.json
+*service-account*.json
+firebase-adminsdk*.json
+*.pem
+*.key
+
+# Logs
+logs
+*.log
+
+# Testing / build cache
+coverage/
+*.tsbuildinfo
+*.local
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+Thumbs.db
+
+# Claude Code local tooling state — not part of the product (see git history
+# for the earlier decision to drop .claude/skills, .mcp.json, skills-lock.json)
+.claude/
+
+# Unused marketing/design leftovers not referenced anywhere in src/
+public/images/carrossel-1.png
+public/images/carrossel-2.png
+public/images/carrossel-3.png
+public/images/logo-original.png
+public/images/post-petvida-v2 (2).png
+public/images/video-flat.mp4
+public/images/video-reveal.mp4
+
+# Stray 0-byte files from a broken shell command in an earlier session
+JSON.stringify({
+console.error(e))
+console.log('
+console.log('container
+console.log(JSON.stringify(d

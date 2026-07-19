@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
 import { Pet } from '@/types';
+import type { PdfPeriod } from '@/lib/pdf';
 import PetHeroCard from './components/PetHeroCard';
 import PetHealthTab from './components/PetHealthTab';
 import PetRemindersTab from './components/PetRemindersTab';
@@ -22,6 +23,7 @@ export default function PetDetailPage() {
   const [showEdit, setShowEdit] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [form, setForm] = useState<PetFormData | null>(null);
+  const [pdfPeriod, setPdfPeriod] = useState<PdfPeriod>('all');
 
   if (!pet) {
     return (
@@ -118,6 +120,28 @@ export default function PetDetailPage() {
               )}
             </button>
           ))}
+        </div>
+
+        {/* Export PDF */}
+        <div className="flex items-center justify-end gap-2 mb-5">
+          <select
+            value={pdfPeriod}
+            onChange={e => setPdfPeriod(e.target.value as PdfPeriod)}
+            className="px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-emerald-200 cursor-pointer"
+          >
+            <option value="6m">Últimos 6 meses</option>
+            <option value="1y">Último 1 ano</option>
+            <option value="all">Todo histórico</option>
+          </select>
+          <button
+            onClick={async () => {
+              const { exportPetHealthPdf } = await import('@/lib/pdf');
+              exportPetHealthPdf(pet, healthRecords, reminders, pdfPeriod);
+            }}
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-xl text-xs transition-colors cursor-pointer whitespace-nowrap"
+          >
+            <i className="ri-file-download-line"></i> Exportar PDF
+          </button>
         </div>
 
         {/* Tab Content */}

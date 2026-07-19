@@ -11,6 +11,8 @@ import HealthPage from '@/pages/health/page';
 import FaqPage from '@/pages/faq/page';
 import AppLayout from '@/components/feature/AppLayout';
 import PlanosPage from '@/pages/planos/page';
+import BillingPage from '@/pages/billing/page';
+import NotificationSettingsPage from '@/pages/settings/notifications/page';
 import NotFound from '@/pages/NotFound';
 
 const routes: RouteObject[] = [
@@ -28,6 +30,8 @@ const routes: RouteObject[] = [
       { path: 'reminders', element: <RemindersPage /> },
       { path: 'health', element: <HealthPage /> },
       { path: 'planos', element: <PlanosPage /> },
+      { path: 'billing', element: <BillingPage /> },
+      { path: 'settings/notifications', element: <NotificationSettingsPage /> },
       { path: 'admin', element: <AdminPage /> },
     ],
   },

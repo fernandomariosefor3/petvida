@@ -466,8 +466,8 @@ export default function HomePage() {
           </div>
           <div className="flex items-center gap-4">
             <Link to="/faq" className="text-gray-400 hover:text-white text-sm transition-colors">FAQ</Link>
-            <a href="#" className="text-gray-400 hover:text-white text-sm transition-colors">Privacidade</a>
-            <a href="#" className="text-gray-400 hover:text-white text-sm transition-colors">Termos</a>
+            <a href="/privacidade" className="text-gray-400 hover:text-white text-sm transition-colors">Privacidade</a>
+            <a href="/termos" className="text-gray-400 hover:text-white text-sm transition-colors">Termos</a>
           </div>
         </div>
         <p className="text-center text-gray-600 text-xs mt-6">© 2026 PetVida. Feito com amor para os pets.</p>

@@ -1,10 +1,12 @@
 import { createContext, useContext, ReactNode } from 'react';
 import { AuthProvider, useAuth } from '@/contexts/auth/AuthContext';
 import { DataProvider, useData } from '@/contexts/data/DataContext';
-import { PLAN_LIMITS } from '@/types';
+import { usePlans } from '@/lib/plans';
+import { Plan, isUnlimited } from '@/types';
 
-function checkPlanActive(plan: string, expiresAt: string): boolean {
-  if (plan === 'free' || !expiresAt) return false;
+function isPlanCurrentlyActive(plan: Plan, expiresAt: string): boolean {
+  if (plan === 'free') return true;
+  if (!expiresAt) return false;
   return new Date(expiresAt) > new Date();
 }
 
@@ -13,13 +15,19 @@ const AppContext = createContext<ReturnType<typeof useAppValue> | null>(null);
 function useAppValue() {
   const auth = useAuth();
   const data = useData();
-  const isPremium = auth.currentUser
-    ? checkPlanActive(auth.currentUser.plan, auth.currentUser.planExpiresAt)
-    : false;
-  const planLimits = isPremium ? PLAN_LIMITS.premium : PLAN_LIMITS.free;
-  const canAddPet = data.pets.length < planLimits.maxPets;
+  const { plans } = usePlans();
+
+  const rawPlanId: Plan = auth.currentUser?.plan ?? 'free';
+  const planId: Plan = auth.currentUser && isPlanCurrentlyActive(rawPlanId, auth.currentUser.planExpiresAt)
+    ? rawPlanId
+    : 'free';
+  const isFree = planId === 'free';
+  const isPro = planId === 'pro';
+  const isPremium = planId === 'premium';
+  const planLimits = plans[planId];
+  const canAddPet = isUnlimited(planLimits.maxPets) || data.pets.length < planLimits.maxPets;
   const canUploadPhoto = planLimits.photoUpload;
-  return { ...auth, ...data, isPremium, planLimits, canAddPet, canUploadPhoto };
+  return { ...auth, ...data, planId, isFree, isPro, isPremium, planLimits, canAddPet, canUploadPhoto };
 }
 
 function AppContextBridge({ children }: { children: ReactNode }) {
@@ -37,6 +45,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- Provider + hook colocated by design
 export function useApp() {
   const ctx = useContext(AppContext);
   if (!ctx) throw new Error('useApp must be used within AppProvider');

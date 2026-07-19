@@ -5,11 +5,13 @@ import {
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase';
-import { User, Plan } from '@/types';
+import { trackEvent } from '@/lib/analytics';
+import { User, Plan, NotificationSettings } from '@/types';
 
 interface AuthContextType {
   currentUser: User | null;
   firebaseUser: FirebaseUser | null;
+  isAdmin: boolean;
   loading: boolean;
   login: (email: string, password: string) => Promise<{ error: string | null }>;
   register: (name: string, email: string, password: string) => Promise<{ error: string | null }>;
@@ -35,12 +37,15 @@ function mapUser(uid: string, data: Record<string, unknown>, fallbackEmail: stri
     plan: ((data.plan as Plan) ?? 'free'),
     planExpiresAt: tsToString(data.planExpiresAt),
     createdAt: tsToString(data.createdAt),
+    paymentFailedAt: data.paymentFailedAt ? tsToString(data.paymentFailedAt) : undefined,
+    notificationSettings: data.notificationSettings as NotificationSettings | undefined,
   };
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = useCallback(async (fbUser: FirebaseUser) => {
@@ -64,7 +69,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
       setFirebaseUser(fbUser);
-      if (fbUser) { await fetchProfile(fbUser); } else { setCurrentUser(null); }
+      if (fbUser) {
+        await fetchProfile(fbUser);
+        // Force-refresh so a claim granted moments ago (see
+        // functions/scripts/set-admin-claim.mjs) is visible without
+        // requiring the user to sign out and back in.
+        const tokenResult = await fbUser.getIdTokenResult(true);
+        setIsAdmin(tokenResult.claims.admin === true);
+      } else {
+        setCurrentUser(null);
+        setIsAdmin(false);
+      }
       setLoading(false);
     });
     return unsubscribe;
@@ -90,6 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await setDoc(doc(db, 'users', user.uid), {
         name, email, phone: '', plan: 'free', planExpiresAt: '', createdAt: serverTimestamp(),
       });
+      trackEvent('user_registered', { method: 'email' });
       return { error: null };
     } catch (err: unknown) {
       const code = (err as { code?: string }).code;
@@ -111,12 +127,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ currentUser, firebaseUser, loading, login, register, logout, resetPassword, refreshProfile }}>
+    <AuthContext.Provider value={{ currentUser, firebaseUser, isAdmin, loading, login, register, logout, resetPassword, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- Provider + hook colocated by design
 export function useAuth() {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error('useAuth must be used within AuthProvider');

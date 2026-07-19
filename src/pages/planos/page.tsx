@@ -1,37 +1,79 @@
+import { useState } from 'react';
+import { httpsCallable } from 'firebase/functions';
 import { useApp } from '@/contexts/AppContext';
-import { PLAN_LIMITS } from '@/types';
+import { usePlans } from '@/lib/plans';
+import { functions } from '@/lib/firebase';
+import { trackEvent } from '@/lib/analytics';
+import { Plan, isUnlimited } from '@/types';
+
+const ACCENT: Record<Plan, { border: string; borderActive: string; badge: string; price: string; button: string }> = {
+  free: {
+    border: 'border-gray-100', borderActive: 'border-emerald-400',
+    badge: 'bg-emerald-100 text-emerald-700', price: 'text-gray-800', button: '',
+  },
+  pro: {
+    border: 'border-gray-100', borderActive: 'border-blue-400',
+    badge: 'bg-blue-100 text-blue-700', price: 'text-blue-600',
+    button: 'bg-blue-500 hover:bg-blue-600',
+  },
+  premium: {
+    border: 'border-gray-100', borderActive: 'border-orange-400',
+    badge: 'bg-orange-100 text-orange-700', price: 'text-orange-500',
+    button: 'bg-orange-500 hover:bg-orange-600',
+  },
+};
+
+function formatPrice(cents: number): string {
+  if (cents === 0) return 'R$0';
+  return `R$${(cents / 100).toFixed(2).replace('.', ',')}`;
+}
 
 export default function PlanosPage() {
-  const { currentUser, isPremium, pets } = useApp();
+  const { currentUser, planId } = useApp();
+  const { plans } = usePlans();
+  const [checkoutLoading, setCheckoutLoading] = useState<Plan | null>(null);
+  const [checkoutError, setCheckoutError] = useState('');
   if (!currentUser) return null;
 
-  const features = [
-    { label: 'Cadastro de pets', free: 'Até 3 pets', premium: 'Ilimitado', icon: 'ri-heart-2-line' },
-    { label: 'Lembretes por pet', free: 'Até 5 por pet', premium: 'Ilimitado', icon: 'ri-alarm-line' },
-    { label: 'Histórico de saúde', free: '✓', premium: '✓', icon: 'ri-heart-pulse-line' },
-    { label: 'Upload de fotos', free: '✗', premium: '✓', icon: 'ri-camera-line' },
-    { label: 'Exportar dados', free: '✗', premium: '✓', icon: 'ri-download-line' },
-    { label: 'Badge Premium', free: '✗', premium: '✓', icon: 'ri-vip-crown-line' },
-    { label: 'Suporte prioritário', free: '✗', premium: '✓', icon: 'ri-customer-service-line' },
+  async function handleStripeCheckout(targetPlan: 'pro' | 'premium') {
+    trackEvent('upgrade_clicked', { from_plan: planId, to_plan: targetPlan });
+    setCheckoutLoading(targetPlan);
+    setCheckoutError('');
+    try {
+      trackEvent('checkout_started', { to_plan: targetPlan });
+      const createCheckoutSession = httpsCallable<{ plan: string }, { url: string }>(functions, 'createCheckoutSession');
+      const { data } = await createCheckoutSession({ plan: targetPlan });
+      window.location.href = data.url;
+    } catch {
+      setCheckoutError('Não foi possível iniciar o pagamento. Tente novamente.');
+      setCheckoutLoading(null);
+    }
+  }
+
+  const featureRows: { label: string; icon: string; get: (p: Plan) => string }[] = [
+    { label: 'Cadastro de pets', icon: 'ri-heart-2-line', get: (p) => isUnlimited(plans[p].maxPets) ? 'Ilimitado' : `Até ${plans[p].maxPets}` },
+    { label: 'Lembretes por pet', icon: 'ri-alarm-line', get: (p) => isUnlimited(plans[p].maxRemindersPerPet) ? 'Ilimitado' : `Até ${plans[p].maxRemindersPerPet}` },
+    { label: 'Histórico de saúde', icon: 'ri-heart-pulse-line', get: (p) => plans[p].healthRecords ? '✓' : '✗' },
+    { label: 'Upload de fotos', icon: 'ri-camera-line', get: (p) => plans[p].photoUpload ? '✓' : '✗' },
+    { label: 'Exportar dados', icon: 'ri-download-line', get: (p) => plans[p].exportData ? '✓' : '✗' },
   ];
 
   return (
     <div className="flex-1 overflow-y-auto bg-gray-50">
-      <div className="p-6 max-w-4xl mx-auto">
+      <div className="p-6 max-w-5xl mx-auto">
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-gray-800">Escolha seu plano</h1>
           <p className="text-gray-500 text-sm mt-1">Cuide dos seus pets com o plano ideal para você</p>
         </div>
 
-        {/* Current plan status */}
-        {isPremium && (
-          <div className="bg-gradient-to-r from-orange-500 to-orange-400 rounded-2xl p-5 mb-8 flex items-center gap-4">
+        {planId !== 'free' && (
+          <div className={`rounded-2xl p-5 mb-8 flex items-center gap-4 ${planId === 'premium' ? 'bg-gradient-to-r from-orange-500 to-orange-400' : 'bg-gradient-to-r from-blue-500 to-blue-400'}`}>
             <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
               <i className="ri-vip-crown-line text-white text-2xl"></i>
             </div>
             <div>
-              <p className="text-white font-bold text-lg">Você é Premium! ★</p>
-              <p className="text-orange-100 text-sm">
+              <p className="text-white font-bold text-lg">Você é {plans[planId].name}! ★</p>
+              <p className="text-white/80 text-sm">
                 Plano ativo até {currentUser.planExpiresAt ? new Date(currentUser.planExpiresAt).toLocaleDateString('pt-BR') : '—'}
               </p>
             </div>
@@ -39,104 +81,89 @@ export default function PlanosPage() {
         )}
 
         {/* Plan cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-          {/* Free */}
-          <div className={`bg-white rounded-2xl border-2 p-6 ${!isPremium ? 'border-emerald-400' : 'border-gray-100'}`}>
-            {!isPremium && (
-              <span className="inline-block bg-emerald-100 text-emerald-700 text-xs font-bold px-3 py-1 rounded-full mb-4">Plano atual</span>
-            )}
-            <h2 className="text-xl font-bold text-gray-800">Grátis</h2>
-            <div className="mt-2 mb-6">
-              <span className="text-3xl font-bold text-gray-800">R$0</span>
-              <span className="text-gray-400 text-sm">/para sempre</span>
-            </div>
-            <ul className="space-y-3 mb-6">
-              <li className="flex items-center gap-2 text-sm text-gray-600"><i className="ri-check-line text-emerald-500"></i>Até 3 pets</li>
-              <li className="flex items-center gap-2 text-sm text-gray-600"><i className="ri-check-line text-emerald-500"></i>5 lembretes por pet</li>
-              <li className="flex items-center gap-2 text-sm text-gray-600"><i className="ri-check-line text-emerald-500"></i>Histórico de saúde</li>
-              <li className="flex items-center gap-2 text-sm text-gray-300"><i className="ri-close-line"></i>Upload de fotos</li>
-              <li className="flex items-center gap-2 text-sm text-gray-300"><i className="ri-close-line"></i>Exportar dados</li>
-              <li className="flex items-center gap-2 text-sm text-gray-300"><i className="ri-close-line"></i>Suporte prioritário</li>
-            </ul>
-            {!isPremium && (
-              <div className="py-2.5 text-center text-gray-400 text-sm font-medium border border-gray-200 rounded-xl">Seu plano atual</div>
-            )}
-          </div>
-
-          {/* Premium */}
-          <div className={`bg-white rounded-2xl border-2 p-6 relative overflow-hidden ${isPremium ? 'border-orange-400' : 'border-gray-100'}`}>
-            <div className="absolute top-0 right-0 bg-orange-500 text-white text-[10px] font-bold px-4 py-1 transform rotate-45 translate-x-6 translate-y-2">Popular</div>
-            {isPremium && (
-              <span className="inline-block bg-orange-100 text-orange-700 text-xs font-bold px-3 py-1 rounded-full mb-4">★ Plano atual</span>
-            )}
-            <h2 className="text-xl font-bold text-gray-800">Premium</h2>
-            <div className="mt-2 mb-1">
-              <span className="text-3xl font-bold text-orange-500">R$29,99</span>
-              <span className="text-gray-400 text-sm">/ano</span>
-            </div>
-            <p className="text-xs text-emerald-600 font-medium mb-6">Apenas R$2,50/mês — menos que um café! ☕</p>
-            <ul className="space-y-3 mb-6">
-              <li className="flex items-center gap-2 text-sm text-gray-600"><i className="ri-check-line text-orange-500"></i><strong>Pets ilimitados</strong></li>
-              <li className="flex items-center gap-2 text-sm text-gray-600"><i className="ri-check-line text-orange-500"></i><strong>Lembretes ilimitados</strong></li>
-              <li className="flex items-center gap-2 text-sm text-gray-600"><i className="ri-check-line text-orange-500"></i>Histórico de saúde</li>
-              <li className="flex items-center gap-2 text-sm text-gray-600"><i className="ri-check-line text-orange-500"></i>Upload de fotos dos pets</li>
-              <li className="flex items-center gap-2 text-sm text-gray-600"><i className="ri-check-line text-orange-500"></i>Exportar dados</li>
-              <li className="flex items-center gap-2 text-sm text-gray-600"><i className="ri-check-line text-orange-500"></i>Suporte prioritário</li>
-            </ul>
-            {!isPremium ? (
-              <a
-                href="https://wa.me/5585987436263?text=Olá! Quero assinar o plano Premium do PetVida (R$29,99/ano). Meu e-mail de cadastro é: "
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block w-full py-3 text-center bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl transition-colors cursor-pointer"
-              >
-                <i className="ri-whatsapp-line mr-1"></i> Assinar via WhatsApp
-              </a>
-            ) : (
-              <div className="py-2.5 text-center text-orange-500 text-sm font-bold border-2 border-orange-200 rounded-xl bg-orange-50">★ Você é Premium!</div>
-            )}
-          </div>
-        </div>
-
-        {/* Comparison table */}
-        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-          <div className="px-6 py-4 border-b border-gray-100">
-            <h3 className="font-bold text-gray-800">Comparação detalhada</h3>
-          </div>
-          <div className="divide-y divide-gray-50">
-            <div className="grid grid-cols-3 px-6 py-3 bg-gray-50">
-              <span className="text-xs font-semibold text-gray-500">Recurso</span>
-              <span className="text-xs font-semibold text-gray-500 text-center">Grátis</span>
-              <span className="text-xs font-semibold text-orange-500 text-center">Premium</span>
-            </div>
-            {features.map(f => (
-              <div key={f.label} className="grid grid-cols-3 px-6 py-3 items-center">
-                <span className="flex items-center gap-2 text-sm text-gray-700">
-                  <i className={`${f.icon} text-gray-400 text-sm`}></i>{f.label}
-                </span>
-                <span className={`text-sm text-center ${f.free === '✗' ? 'text-gray-300' : 'text-gray-600'}`}>{f.free}</span>
-                <span className={`text-sm text-center font-medium ${f.premium === '✓' ? 'text-orange-500' : 'text-orange-600'}`}>{f.premium}</span>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+          {(['free', 'pro', 'premium'] as Plan[]).map((tier) => {
+            const plan = plans[tier];
+            const isCurrent = planId === tier;
+            const accent = ACCENT[tier];
+            return (
+              <div key={tier} className={`bg-white rounded-2xl border-2 p-6 relative overflow-hidden ${isCurrent ? accent.borderActive : accent.border}`}>
+                {tier === 'pro' && (
+                  <div className="absolute top-0 right-0 bg-blue-500 text-white text-[10px] font-bold px-4 py-1 transform rotate-45 translate-x-6 translate-y-2">Popular</div>
+                )}
+                {isCurrent && (
+                  <span className={`inline-block text-xs font-bold px-3 py-1 rounded-full mb-4 ${accent.badge}`}>
+                    {tier === 'free' ? 'Plano atual' : '★ Plano atual'}
+                  </span>
+                )}
+                <h2 className="text-xl font-bold text-gray-800">{plan.name}</h2>
+                <div className="mt-2 mb-1">
+                  <span className={`text-3xl font-bold ${accent.price}`}>{formatPrice(plan.price)}</span>
+                  {plan.price > 0 && <span className="text-gray-400 text-sm">/ano</span>}
+                  {plan.price === 0 && <span className="text-gray-400 text-sm">/para sempre</span>}
+                </div>
+                <ul className="space-y-3 mb-6 mt-4">
+                  {featureRows.map((row) => {
+                    const value = row.get(tier);
+                    const empty = value === '✗';
+                    return (
+                      <li key={row.label} className={`flex items-center gap-2 text-sm ${empty ? 'text-gray-300' : 'text-gray-600'}`}>
+                        <i className={`${empty ? 'ri-close-line' : 'ri-check-line'} ${empty ? '' : accent.price}`}></i>
+                        {row.label}{value !== '✓' && value !== '✗' ? `: ${value}` : ''}
+                      </li>
+                    );
+                  })}
+                </ul>
+                {isCurrent ? (
+                  <div className="py-2.5 text-center text-gray-400 text-sm font-medium border border-gray-200 rounded-xl">Seu plano atual</div>
+                ) : tier === 'free' ? (
+                  <div className="py-2.5 text-center text-gray-300 text-sm font-medium border border-gray-100 rounded-xl">Plano de entrada</div>
+                ) : (
+                  <div className="space-y-2.5">
+                    <button
+                      onClick={() => handleStripeCheckout(tier as 'pro' | 'premium')}
+                      disabled={checkoutLoading !== null}
+                      className={`flex items-center justify-center gap-2 w-full py-3 text-center disabled:opacity-60 text-white font-bold rounded-xl transition-colors cursor-pointer ${accent.button}`}
+                    >
+                      {checkoutLoading === tier ? (
+                        <><i className="ri-loader-4-line animate-spin"></i> Redirecionando...</>
+                      ) : (
+                        <><i className="ri-bank-card-line"></i> Assinar com cartão</>
+                      )}
+                    </button>
+                    <a
+                      href={`https://wa.me/5585987436263?text=Olá! Quero assinar o plano ${plan.name} do PetVida (${formatPrice(plan.price)}/ano). Meu e-mail de cadastro é: `}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block w-full py-2.5 text-center border border-gray-200 hover:border-gray-300 text-gray-600 font-semibold rounded-xl text-sm transition-colors cursor-pointer"
+                    >
+                      <i className="ri-whatsapp-line mr-1"></i> Prefiro pagar via PIX/WhatsApp
+                    </a>
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
+            );
+          })}
         </div>
+
+        {checkoutError && <p className="text-red-500 text-xs text-center -mt-6 mb-6">{checkoutError}</p>}
 
         {/* How it works */}
-        {!isPremium && (
+        {planId !== 'premium' && (
           <div className="mt-8 bg-orange-50 rounded-2xl p-6 border border-orange-100">
-            <h3 className="font-bold text-gray-800 mb-4"><i className="ri-question-line mr-1 text-orange-500"></i>Como assinar o Premium?</h3>
+            <h3 className="font-bold text-gray-800 mb-4"><i className="ri-question-line mr-1 text-orange-500"></i>Como assinar por PIX/WhatsApp?</h3>
             <div className="space-y-3 text-sm text-gray-600">
               <div className="flex items-start gap-3">
                 <span className="w-6 h-6 bg-orange-500 text-white text-xs font-bold rounded-full flex items-center justify-center flex-shrink-0">1</span>
-                <p>Clique no botão "Assinar via WhatsApp" acima</p>
+                <p>Clique no botão "Prefiro pagar via PIX/WhatsApp" no plano desejado</p>
               </div>
               <div className="flex items-start gap-3">
                 <span className="w-6 h-6 bg-orange-500 text-white text-xs font-bold rounded-full flex items-center justify-center flex-shrink-0">2</span>
-                <p>Envie seu e-mail de cadastro e realize o pagamento via PIX (R$29,99)</p>
+                <p>Envie seu e-mail de cadastro e realize o pagamento via PIX</p>
               </div>
               <div className="flex items-start gap-3">
                 <span className="w-6 h-6 bg-orange-500 text-white text-xs font-bold rounded-full flex items-center justify-center flex-shrink-0">3</span>
-                <p>Seu plano será ativado em até 1 hora e você terá acesso a todos os recursos!</p>
+                <p>Seu plano será ativado em até 1 hora e você terá acesso aos novos recursos!</p>
               </div>
             </div>
           </div>

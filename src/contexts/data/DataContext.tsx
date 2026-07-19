@@ -2,10 +2,12 @@ import { createContext, useContext, useState, useEffect, useCallback, ReactNode 
 import {
   collection, doc, addDoc, updateDoc, deleteDoc,
   query, where, orderBy, serverTimestamp, Timestamp,
-  writeBatch, onSnapshot, getDocs,
+  onSnapshot,
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { db, storage } from '@/lib/firebase';
+import { httpsCallable } from 'firebase/functions';
+import { db, storage, functions } from '@/lib/firebase';
+import { trackEvent } from '@/lib/analytics';
 import { Pet, Reminder, HealthRecord } from '@/types';
 import { useAuth } from '@/contexts/auth/AuthContext';
 
@@ -53,6 +55,7 @@ function mapReminder(id: string, data: Record<string, unknown>): Reminder {
     title: (data.title as string) ?? '', type: (data.type as Reminder['type']) ?? 'other',
     date: (data.date as string) ?? '', time: (data.time as string) ?? '',
     notes: (data.notes as string) ?? '', completed: (data.completed as boolean) ?? false,
+    completedAt: (data.completedAt as string) || undefined,
     createdAt: tsToString(data.createdAt),
   };
 }
@@ -115,38 +118,50 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const addPet = async (pet: Omit<Pet, 'id' | 'userId' | 'createdAt'>) => {
     if (!firebaseUser) return;
-    await addDoc(collection(db, 'pets'), { userId: firebaseUser.uid, ...pet, createdAt: serverTimestamp() });
+    const isFirstPet = pets.length === 0;
+    // Pet creation is validated and counted atomically server-side (see
+    // functions/src/pets.ts) — the client can no longer create pet docs
+    // directly, so plan limits can't be bypassed by calling Firestore direct.
+    const createPetFn = httpsCallable<Record<string, unknown>, { id: string }>(functions, 'createPet');
+    await createPetFn(pet);
+    if (isFirstPet) trackEvent('first_pet_added');
   };
   const updatePet = async (id: string, pet: Partial<Pet>) => {
     await updateDoc(doc(db, 'pets', id), stripInternalFields(pet));
   };
   const deletePet = async (id: string) => {
-    const batch = writeBatch(db);
-    batch.delete(doc(db, 'pets', id));
-    const [remSnap, healthSnap] = await Promise.all([
-      getDocs(query(collection(db, 'reminders'), where('petId', '==', id))),
-      getDocs(query(collection(db, 'healthRecords'), where('petId', '==', id))),
-    ]);
-    remSnap.forEach(d => batch.delete(d.ref));
-    healthSnap.forEach(d => batch.delete(d.ref));
-    await batch.commit();
+    const deletePetFn = httpsCallable<{ petId: string }, { success: boolean }>(functions, 'deletePet');
+    await deletePetFn({ petId: id });
   };
   const addReminder = async (reminder: Omit<Reminder, 'id' | 'userId' | 'createdAt'>) => {
     if (!firebaseUser) return;
-    await addDoc(collection(db, 'reminders'), { userId: firebaseUser.uid, ...reminder, createdAt: serverTimestamp() });
+    const createReminderFn = httpsCallable<Record<string, unknown>, { id: string }>(functions, 'createReminder');
+    await createReminderFn(reminder);
+    trackEvent('reminder_created', { type: reminder.type });
   };
   const updateReminder = async (id: string, reminder: Partial<Reminder>) => {
     await updateDoc(doc(db, 'reminders', id), stripInternalFields(reminder));
   };
-  const deleteReminder = async (id: string) => { await deleteDoc(doc(db, 'reminders', id)); };
+  const deleteReminder = async (id: string) => {
+    const reminder = reminders.find(r => r.id === id);
+    const deleteReminderFn = httpsCallable<{ reminderId: string }, { success: boolean }>(functions, 'deleteReminder');
+    await deleteReminderFn({ reminderId: id });
+    if (reminder && !reminder.completed) trackEvent('reminder_skipped', { type: reminder.type });
+  };
   const toggleReminder = async (id: string) => {
     const reminder = reminders.find(r => r.id === id);
     if (!reminder) return;
-    await updateDoc(doc(db, 'reminders', id), { completed: !reminder.completed });
+    const completed = !reminder.completed;
+    await updateDoc(doc(db, 'reminders', id), {
+      completed,
+      completedAt: completed ? new Date().toISOString().split('T')[0] : '',
+    });
+    if (completed) trackEvent('reminder_completed', { type: reminder.type });
   };
   const addHealthRecord = async (record: Omit<HealthRecord, 'id' | 'userId' | 'createdAt'>) => {
     if (!firebaseUser) return;
     await addDoc(collection(db, 'healthRecords'), { userId: firebaseUser.uid, ...record, createdAt: serverTimestamp() });
+    trackEvent('health_record_added', { type: record.type });
   };
   const updateHealthRecord = async (id: string, record: Partial<HealthRecord>) => {
     await updateDoc(doc(db, 'healthRecords', id), stripInternalFields(record));
@@ -164,6 +179,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- Provider + hook colocated by design
 export function useData() {
   const ctx = useContext(DataContext);
   if (!ctx) throw new Error('useData must be used within DataProvider');

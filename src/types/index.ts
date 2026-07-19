@@ -1,4 +1,18 @@
-export type Plan = 'free' | 'premium';
+export type Plan = 'free' | 'pro' | 'premium';
+
+export interface NotificationSettings {
+  remindersEnabled: boolean;
+  urgentEnabled: boolean;
+  weeklySummaryEnabled: boolean;
+  preferredHour: number; // 6-22
+}
+
+export const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
+  remindersEnabled: true,
+  urgentEnabled: true,
+  weeklySummaryEnabled: true,
+  preferredHour: 8,
+};
 
 export interface User {
   id: string;
@@ -8,6 +22,22 @@ export interface User {
   plan: Plan;
   planExpiresAt: string;
   createdAt: string;
+  paymentFailedAt?: string;
+  notificationSettings?: NotificationSettings;
+}
+
+export interface PlanConfig {
+  id: Plan;
+  name: string;
+  maxPets: number;
+  maxRemindersPerPet: number;
+  photoUpload: boolean;
+  healthRecords: boolean;
+  exportData: boolean;
+  price: number;
+  label: string;
+  active: boolean;
+  order: number;
 }
 
 export interface Pet {
@@ -39,6 +69,7 @@ export interface Reminder {
   time: string;
   notes: string;
   completed: boolean;
+  completedAt?: string;
   createdAt: string;
 }
 
@@ -56,22 +87,33 @@ export interface HealthRecord {
   createdAt: string;
 }
 
-// Plan limits
-export const PLAN_LIMITS = {
+// Sentinel used instead of Infinity — Firestore documents cannot store Infinity.
+export const UNLIMITED = -1;
+
+export function isUnlimited(limit: number): boolean {
+  return limit === UNLIMITED;
+}
+
+// Fallback plan limits, used until the 'plans' Firestore collection loads (see src/lib/plans.ts).
+// Keep these in sync with the seed data in scripts/seed-plans.mjs.
+// price (Pro: 1490, Premium: 2999, in cents) — AGUARDANDO CONFIRMAÇÃO COMERCIAL.
+export const PLAN_LIMITS: Record<Plan, PlanConfig> = {
   free: {
-    maxPets: 3,
-    maxRemindersPerPet: 5,
-    photoUpload: false,
-    healthRecords: true,
-    exportData: false,
-    label: 'Grátis',
+    id: 'free', name: 'Grátis', label: 'Grátis',
+    maxPets: 3, maxRemindersPerPet: 5,
+    photoUpload: false, healthRecords: true, exportData: false,
+    price: 0, active: true, order: 0,
+  },
+  pro: {
+    id: 'pro', name: 'Pro', label: 'Pro',
+    maxPets: 10, maxRemindersPerPet: 15,
+    photoUpload: true, healthRecords: true, exportData: false,
+    price: 1490, active: true, order: 1,
   },
   premium: {
-    maxPets: Infinity,
-    maxRemindersPerPet: Infinity,
-    photoUpload: true,
-    healthRecords: true,
-    exportData: true,
-    label: 'Premium',
+    id: 'premium', name: 'Premium', label: 'Premium',
+    maxPets: UNLIMITED, maxRemindersPerPet: UNLIMITED,
+    photoUpload: true, healthRecords: true, exportData: true,
+    price: 2999, active: true, order: 2,
   },
-} as const;
+};
