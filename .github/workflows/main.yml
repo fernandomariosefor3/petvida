@@ -71,7 +71,7 @@ jobs:
         run: npm run build
 
       - name: Install Firebase CLI (for the Firestore emulator)
-        run: npm install -g firebase-tools
+        run: npm install -g firebase-tools@15.2.0
 
       # `npm run test` runs unit tests first (test:unit, no emulator needed),
       # then wraps test:emulator in `firebase emulators:exec` so the
