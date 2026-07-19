@@ -38,6 +38,10 @@ coverage/
 .DS_Store
 Thumbs.db
 
+# Claude Code local tooling state — not part of the product (see git history
+# for the earlier decision to drop .claude/skills, .mcp.json, skills-lock.json)
+.claude/
+
 # Unused marketing/design leftovers not referenced anywhere in src/
 public/images/carrossel-1.png
 public/images/carrossel-2.png

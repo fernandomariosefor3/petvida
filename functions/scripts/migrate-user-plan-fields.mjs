@@ -26,9 +26,19 @@ if (!projectId) {
   process.exit(1);
 }
 
-admin.initializeApp({ credential: admin.credential.applicationDefault(), projectId });
+// Deliberately do NOT pass `projectId` here — see seed-plans.mjs for why
+// echoing the CLI flag back into initializeApp would make this check a
+// no-op instead of actually verifying the credential.
+admin.initializeApp({ credential: admin.credential.applicationDefault() });
 
-const actualProjectId = admin.app().options.projectId;
+const actualProjectId = admin.app().options.projectId
+  ?? process.env.GOOGLE_CLOUD_PROJECT
+  ?? process.env.GCLOUD_PROJECT;
+
+if (!actualProjectId) {
+  console.error('Could not determine the project from the credentials. Set GOOGLE_APPLICATION_CREDENTIALS to a service account key, or run `gcloud auth application-default login` first.');
+  process.exit(1);
+}
 if (actualProjectId !== projectId) {
   console.error(`Refusing to continue: credential resolves to project "${actualProjectId}", not "${projectId}".`);
   process.exit(1);

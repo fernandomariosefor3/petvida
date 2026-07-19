@@ -96,6 +96,7 @@ export function isUnlimited(limit: number): boolean {
 
 // Fallback plan limits, used until the 'plans' Firestore collection loads (see src/lib/plans.ts).
 // Keep these in sync with the seed data in scripts/seed-plans.mjs.
+// price (Pro: 1490, Premium: 2999, in cents) — AGUARDANDO CONFIRMAÇÃO COMERCIAL.
 export const PLAN_LIMITS: Record<Plan, PlanConfig> = {
   free: {
     id: 'free', name: 'Grátis', label: 'Grátis',

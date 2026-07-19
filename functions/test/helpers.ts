@@ -20,7 +20,21 @@ export function getTestDb(): Firestore {
   return getFirestore();
 }
 
-/** Wipes all documents in the emulator between tests so cases don't leak state into each other. */
+/**
+ * Wipes all documents in the emulator between tests so cases don't leak
+ * state into each other.
+ *
+ * IMPORTANT: this clears the ENTIRE emulator project, not just the calling
+ * test file's data. `node --test` runs separate test FILES concurrently by
+ * default — if two files ran in parallel here, each file's beforeEach would
+ * periodically wipe out data the OTHER file's in-progress test had just
+ * written, causing flaky "document not found" failures with no code bug
+ * behind them. That is why functions/package.json's "test:emulator" script
+ * passes `--test-concurrency=1`: it forces test files to run one at a time,
+ * which is required for this shared-emulator/clear-everything strategy to
+ * be safe. If you add a new *.test.ts file that uses getTestDb()/clearFirestore(),
+ * add it to that script too.
+ */
 export async function clearFirestore(): Promise<void> {
   const res = await fetch(
     `http://${EMULATOR_HOST}/emulator/v1/projects/${TEST_PROJECT_ID}/databases/(default)/documents`,

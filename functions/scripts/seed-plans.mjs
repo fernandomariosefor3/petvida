@@ -6,8 +6,10 @@
 //   GOOGLE_APPLICATION_CREDENTIALS=/path/to/serviceAccountKey.json \
 //     node scripts/seed-plans.mjs --project petvid-82a98 [--dry-run] [--yes]
 //
-// Prices below are placeholders, NOT final commercial pricing — adjust them
-// (or wire this script to read from a config file) before relying on them.
+// Prices below (1490 = R$14,90/ano Pro; 2999 = R$29,99/ano Premium) are
+// AGUARDANDO CONFIRMAÇÃO COMERCIAL — placeholders, not approved final
+// pricing. Adjust them (or wire this script to read from a config file)
+// before relying on them for real charges.
 
 import admin from 'firebase-admin';
 
@@ -27,9 +29,22 @@ if (!projectId) {
   process.exit(1);
 }
 
-admin.initializeApp({ credential: admin.credential.applicationDefault(), projectId });
+// Deliberately do NOT pass `projectId` here — letting the Admin SDK infer it
+// from the credential itself (service account JSON, GOOGLE_CLOUD_PROJECT, or
+// metadata server) is what makes the check below meaningful. Passing
+// `--project`'s value straight into initializeApp would make this a
+// tautology: it would just echo back whatever was typed on the CLI, never
+// catching a credential that actually belongs to a different project.
+admin.initializeApp({ credential: admin.credential.applicationDefault() });
 
-const actualProjectId = admin.app().options.projectId;
+const actualProjectId = admin.app().options.projectId
+  ?? process.env.GOOGLE_CLOUD_PROJECT
+  ?? process.env.GCLOUD_PROJECT;
+
+if (!actualProjectId) {
+  console.error('Could not determine the project from the credentials. Set GOOGLE_APPLICATION_CREDENTIALS to a service account key, or run `gcloud auth application-default login` first.');
+  process.exit(1);
+}
 if (actualProjectId !== projectId) {
   console.error(`Refusing to continue: credential resolves to project "${actualProjectId}", not "${projectId}".`);
   process.exit(1);
