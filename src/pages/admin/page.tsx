@@ -83,6 +83,7 @@ export default function AdminPage() {
     if (currentUser.email !== ADMIN_EMAIL) navigate('/dashboard');
   }, [currentUser, navigate]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- fetch once on mount only
   useEffect(() => { fetchUsers(); }, []);
 
   async function fetchUsers() {
