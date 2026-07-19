@@ -1,37 +1,30 @@
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { onRequest } from 'firebase-functions/v2/https';
-import { defineSecret } from 'firebase-functions/params';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import * as logger from 'firebase-functions/logger';
 import Stripe from 'stripe';
+import { stripeSecretKey, stripeWebhookSecret, getPlanPriceIds, type PayingPlan } from './config.js';
+import { syncSubscription, handleSubscriptionDeleted, UnknownPriceIdError } from './subscription-sync.js';
+import { claimEvent, markEventSucceeded, markEventFailed, EventAlreadyProcessedError, EventInFlightError } from './event-ledger.js';
 
-const stripeSecretKey = defineSecret('STRIPE_SECRET_KEY');
-const stripeWebhookSecret = defineSecret('STRIPE_WEBHOOK_SECRET');
-
-// TODO: replace with the real Price ID once the "PetVida Pro" product/price is
-// created in the Stripe Dashboard (Products -> New -> recurring price).
-const PRO_PRICE_ID = 'price_REPLACE_WITH_PRO_PRICE_ID';
-const PREMIUM_PRICE_ID = 'price_1Toj7sFrgUEtY7Q61txvmvoN';
 const SITE_URL = 'https://petvida.net.br';
 
-const PLAN_PRICE_IDS: Record<string, string> = {
-  pro: PRO_PRICE_ID,
-  premium: PREMIUM_PRICE_ID,
-};
-const PRICE_ID_TO_PLAN: Record<string, string> = {
-  [PRO_PRICE_ID]: 'pro',
-  [PREMIUM_PRICE_ID]: 'premium',
-};
+function isPayingPlan(value: unknown): value is PayingPlan {
+  return value === 'pro' || value === 'premium';
+}
 
 export const createCheckoutSession = onCall({ secrets: [stripeSecretKey] }, async (request) => {
   if (!request.auth) {
     throw new HttpsError('unauthenticated', 'Login necessário para assinar um plano.');
   }
 
-  const requestedPlan = (request.data?.plan as string) ?? 'premium';
-  const priceId = PLAN_PRICE_IDS[requestedPlan];
-  if (!priceId) {
+  const requestedPlan = request.data?.plan;
+  if (!isPayingPlan(requestedPlan)) {
     throw new HttpsError('invalid-argument', 'Plano inválido.');
   }
+
+  const priceIds = getPlanPriceIds(); // throws HttpsError-worthy config error if unset — see catch below
+  const priceId = priceIds[requestedPlan];
 
   const stripe = new Stripe(stripeSecretKey.value());
   const userId = request.auth.uid;
@@ -63,70 +56,75 @@ export const stripeWebhook = onRequest({ secrets: [stripeSecretKey, stripeWebhoo
     return;
   }
 
-  const db = getFirestore();
-
-  function resolvePlan(subscription: Stripe.Subscription): string {
-    const metaPlan = subscription.metadata?.plan;
-    if (metaPlan && (metaPlan === 'pro' || metaPlan === 'premium')) return metaPlan;
-    const priceId = subscription.items.data[0]?.price?.id;
-    return (priceId && PRICE_ID_TO_PLAN[priceId]) || 'premium';
+  try {
+    await claimEvent(event.id, event.type);
+  } catch (err) {
+    if (err instanceof EventAlreadyProcessedError || err instanceof EventInFlightError) {
+      res.status(200).send({ received: true, deduped: true });
+      return;
+    }
+    logger.error('Failed to claim Stripe event for idempotent processing', { eventId: event.id, error: err });
+    res.status(500).send({ error: 'ledger_error' });
+    return;
   }
 
-  async function setPlanFromSubscription(userId: string, subscriptionId: string) {
-    const stripeClient = new Stripe(stripeSecretKey.value());
-    const subscription = await stripeClient.subscriptions.retrieve(subscriptionId);
-    const periodEnd = new Date(subscription.items.data[0].current_period_end * 1000);
-    await db.doc(`users/${userId}`).set(
-      {
-        plan: resolvePlan(subscription),
-        planExpiresAt: periodEnd.toISOString().split('T')[0],
-        stripeCustomerId: subscription.customer as string,
-        stripeSubscriptionId: subscriptionId,
-        paymentFailedAt: FieldValue.delete(),
-      },
-      { merge: true }
-    );
+  try {
+    await processStripeEvent(event, stripe);
+    await markEventSucceeded(event.id);
+    res.status(200).send({ received: true });
+  } catch (err) {
+    await markEventFailed(event.id, err);
+    logger.error('Stripe webhook event processing failed', {
+      eventId: event.id,
+      type: event.type,
+      error: err instanceof Error ? err.message : String(err),
+    });
+    // Non-2xx tells Stripe to retry — critical for UnknownPriceIdError and
+    // any transient failure, since we never want to silently drop an event.
+    res.status(500).send({ error: 'processing_failed' });
   }
+});
 
+async function processStripeEvent(event: Stripe.Event, stripe: Stripe): Promise<void> {
   switch (event.type) {
     case 'checkout.session.completed': {
       const session = event.data.object as Stripe.Checkout.Session;
-      const userId = session.metadata?.userId ?? session.client_reference_id;
-      if (userId && session.subscription) {
-        await setPlanFromSubscription(userId, session.subscription as string);
+      if (session.subscription) {
+        const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
+        await syncSubscription(subscription);
       }
       break;
     }
+
+    case 'customer.subscription.created':
+    case 'customer.subscription.updated': {
+      await syncSubscription(event.data.object as Stripe.Subscription);
+      break;
+    }
+
+    case 'customer.subscription.deleted': {
+      await handleSubscriptionDeleted(event.data.object as Stripe.Subscription);
+      break;
+    }
+
     case 'invoice.payment_succeeded': {
       const invoice = event.data.object as Stripe.Invoice;
       const subscriptionId = invoice.parent?.subscription_details?.subscription as string | undefined;
       if (subscriptionId) {
-        const stripeClient = new Stripe(stripeSecretKey.value());
-        const subscription = await stripeClient.subscriptions.retrieve(subscriptionId);
-        const userId = subscription.metadata?.userId;
-        if (userId) await setPlanFromSubscription(userId, subscriptionId);
+        const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+        await syncSubscription(subscription);
       }
       break;
     }
-    case 'customer.subscription.deleted': {
-      const subscription = event.data.object as Stripe.Subscription;
-      const userId = subscription.metadata?.userId;
-      if (userId) {
-        await db.doc(`users/${userId}`).set(
-          { plan: 'free', planExpiresAt: '', paymentFailedAt: FieldValue.delete() },
-          { merge: true }
-        );
-      }
-      break;
-    }
+
     case 'invoice.payment_failed': {
       const invoice = event.data.object as Stripe.Invoice;
       const subscriptionId = invoice.parent?.subscription_details?.subscription as string | undefined;
       if (subscriptionId) {
-        const stripeClient = new Stripe(stripeSecretKey.value());
-        const subscription = await stripeClient.subscriptions.retrieve(subscriptionId);
+        const subscription = await stripe.subscriptions.retrieve(subscriptionId);
         const userId = subscription.metadata?.userId;
         if (userId) {
+          const db = getFirestore();
           const userRef = db.doc(`users/${userId}`);
           const userSnap = await userRef.get();
           // Only stamp the first failure in a streak, so the 7-day grace
@@ -145,7 +143,14 @@ export const stripeWebhook = onRequest({ secrets: [stripeSecretKey, stripeWebhoo
       }
       break;
     }
-  }
 
-  res.status(200).send({ received: true });
-});
+    default:
+      // Unhandled event types are acknowledged (marked succeeded) without
+      // side effects — Stripe sends many event types we don't act on.
+      break;
+  }
+}
+
+// Re-exported for tests and for anything downstream that needs to
+// distinguish "unrecognized price" from other processing failures.
+export { UnknownPriceIdError };

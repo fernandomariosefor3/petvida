@@ -19,8 +19,6 @@ import { useApp } from '@/contexts/AppContext';
 import { useNavigate } from 'react-router-dom';
 import { Plan } from '@/types';
 
-const ADMIN_EMAIL = 'fernandomariodasmartins@gmail.com';
-
 interface UserRecord {
   id: string;
   name: string;
@@ -56,7 +54,7 @@ function getActivePlan(user: UserRecord): Plan {
 }
 
 export default function AdminPage() {
-  const { currentUser } = useApp();
+  const { currentUser, isAdmin } = useApp();
   const navigate = useNavigate();
   const [users, setUsers] = useState<UserRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -80,8 +78,8 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!currentUser) return;
-    if (currentUser.email !== ADMIN_EMAIL) navigate('/dashboard');
-  }, [currentUser, navigate]);
+    if (!isAdmin) navigate('/dashboard');
+  }, [currentUser, isAdmin, navigate]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps -- fetch once on mount only
   useEffect(() => { fetchUsers(); }, []);
@@ -223,7 +221,7 @@ export default function AdminPage() {
   const totalPro = users.filter(u => getActivePlan(u) === 'pro').length;
   const totalFree = totalUsers - totalPremium - totalPro;
 
-  if (currentUser?.email !== ADMIN_EMAIL) return null;
+  if (!isAdmin) return null;
 
   return (
     <div className="flex-1 min-h-screen" style={{ background: 'linear-gradient(160deg, #fff7ed 0%, #f0fdf4 50%, #eff6ff 100%)' }}>

@@ -37,6 +37,7 @@ export interface PlanConfig {
   price: number;
   label: string;
   active: boolean;
+  order: number;
 }
 
 export interface Pet {
@@ -100,18 +101,18 @@ export const PLAN_LIMITS: Record<Plan, PlanConfig> = {
     id: 'free', name: 'Grátis', label: 'Grátis',
     maxPets: 3, maxRemindersPerPet: 5,
     photoUpload: false, healthRecords: true, exportData: false,
-    price: 0, active: true,
+    price: 0, active: true, order: 0,
   },
   pro: {
     id: 'pro', name: 'Pro', label: 'Pro',
     maxPets: 10, maxRemindersPerPet: 15,
     photoUpload: true, healthRecords: true, exportData: false,
-    price: 1490, active: true,
+    price: 1490, active: true, order: 1,
   },
   premium: {
     id: 'premium', name: 'Premium', label: 'Premium',
     maxPets: UNLIMITED, maxRemindersPerPet: UNLIMITED,
     photoUpload: true, healthRecords: true, exportData: true,
-    price: 2999, active: true,
+    price: 2999, active: true, order: 2,
   },
 };

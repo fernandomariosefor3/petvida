@@ -9,7 +9,10 @@
   "scripts": {
     "build": "tsc",
     "deploy": "npm run build && firebase deploy --only functions",
-    "logs": "firebase functions:log"
+    "logs": "firebase functions:log",
+    "test:unit": "node --import tsx --test test/plan-resolution.test.ts",
+    "test:emulator": "node --import tsx --test --test-concurrency=1 test/pets.test.ts test/reminders.test.ts test/subscription-sync.test.ts test/webhook-idempotency.test.ts test/rules.test.ts",
+    "test": "npm run test:unit && firebase emulators:exec --only firestore --project demo-petvida-test \"npm run test:emulator\""
   },
   "dependencies": {
     "firebase-admin": "^13.0.2",
@@ -17,6 +20,8 @@
     "stripe": "^22.3.0"
   },
   "devDependencies": {
+    "@firebase/rules-unit-testing": "^4.0.1",
+    "tsx": "^4.19.2",
     "typescript": "~5.8.3"
   }
 }

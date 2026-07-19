@@ -46,6 +46,7 @@ export default function RemindersPage() {
   const [search, setSearch] = useState('');
   const [searchParams] = useSearchParams();
   const highlightId = searchParams.get('highlight');
+  const [limitError, setLimitError] = useState<string | null>(null);
 
   if (!currentUser) return null;
 
@@ -85,14 +86,25 @@ export default function RemindersPage() {
     setShowForm(true);
   };
 
-  const handleSubmit = (e: React.SyntheticEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (editingId) {
-      updateReminder(editingId, form);
-    } else {
-      addReminder({ ...form, completed: false });
+    setLimitError(null);
+    try {
+      if (editingId) {
+        await updateReminder(editingId, form);
+      } else {
+        await addReminder({ ...form, completed: false });
+      }
+      setShowForm(false);
+    } catch (err: unknown) {
+      // The server validates the per-pet limit atomically — this can
+      // legitimately fire even though the UI doesn't pre-check it client-side.
+      if ((err as { code?: string })?.code?.includes('resource-exhausted')) {
+        setLimitError('Limite de lembretes deste pet atingido. Faça upgrade para adicionar mais.');
+      } else {
+        console.error('Erro ao salvar lembrete:', err);
+      }
     }
-    setShowForm(false);
   };
 
   const formatDate = (d: string) => {
@@ -337,6 +349,7 @@ export default function RemindersPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Observações</label>
                 <textarea value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} rows={2} maxLength={500} placeholder="Informações adicionais..." className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400 resize-none" />
               </div>
+              {limitError && <p className="text-rose-500 text-xs -mt-2">{limitError}</p>}
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setShowForm(false)} className="flex-1 py-2.5 border border-gray-200 text-gray-600 font-medium rounded-xl text-sm hover:bg-gray-50 cursor-pointer whitespace-nowrap">Cancelar</button>
                 <button type="submit" className="flex-1 py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-xl text-sm transition-colors cursor-pointer whitespace-nowrap">

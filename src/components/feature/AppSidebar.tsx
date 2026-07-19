@@ -2,8 +2,6 @@ import { useState } from 'react';
 import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
 
-const ADMIN_EMAIL = 'fernandomariodasmartins@gmail.com';
-
 const navItems = [
   { path: '/dashboard', label: 'Dashboard', icon: 'ri-layout-grid-line' },
   { path: '/pets', label: 'Meus Pets', icon: 'ri-heart-2-line' },
@@ -13,13 +11,11 @@ const navItems = [
 ];
 
 export default function AppSidebar() {
-  const { currentUser, logout, pets, reminders, isPremium, isPro, isFree } = useApp();
+  const { currentUser, logout, pets, reminders, isPremium, isPro, isFree, isAdmin } = useApp();
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
 
   const handleLogout = async () => { await logout(); navigate('/'); };
-
-  const isAdmin = currentUser?.email === ADMIN_EMAIL;
 
   const visibleItems = [
     ...navItems,

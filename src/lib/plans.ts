@@ -18,6 +18,7 @@ function mapPlanDoc(id: string, data: Record<string, unknown>): PlanConfig {
     exportData: (data.features as string[] | undefined)?.includes('exportData') ?? fallback.exportData,
     price: (data.price as number) ?? fallback.price,
     active: (data.active as boolean) ?? true,
+    order: (data.order as number) ?? fallback.order,
   };
 }
 

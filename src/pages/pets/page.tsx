@@ -63,9 +63,21 @@ export default function PetsPage() {
 
   const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (editingId) { await updatePet(editingId, form); }
-    else { await addPet(form); }
-    setShowForm(false); setEditingId(null);
+    try {
+      if (editingId) { await updatePet(editingId, form); }
+      else { await addPet(form); }
+      setShowForm(false); setEditingId(null);
+    } catch (err: unknown) {
+      // The server validates the plan limit atomically — this can still
+      // legitimately fire even when the client-side check passed (e.g. two
+      // tabs open at once).
+      if ((err as { code?: string })?.code?.includes('resource-exhausted')) {
+        setShowForm(false);
+        setUpgradeReason('pets');
+      } else {
+        console.error('Erro ao salvar pet:', err);
+      }
+    }
   };
 
   const handleDelete = (id: string) => { deletePet(id); setDeleteConfirm(null); };

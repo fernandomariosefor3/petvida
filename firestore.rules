@@ -3,23 +3,12 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function userDoc(uid) {
-      return get(/databases/$(database)/documents/users/$(uid)).data;
+    function isAdmin() {
+      return request.auth != null && request.auth.token.admin == true;
     }
 
-    // Fails open (allows the write) when petLimit hasn't been backfilled yet
-    // for this user — see scripts/migrate-user-plan-fields.mjs. Once backfilled,
-    // this enforces the plan's pet quota server-side.
-    function withinPetLimit(uid) {
-      let u = userDoc(uid);
-      return !('petLimit' in u) || u.petLimit == -1 || u.petCount < u.petLimit;
-    }
-
-    function withinReminderLimit(uid, petId) {
-      let u = userDoc(uid);
-      let p = get(/databases/$(database)/documents/pets/$(petId)).data;
-      return !('reminderLimitPerPet' in u) || u.reminderLimitPerPet == -1
-        || !('reminderCount' in p) || p.reminderCount < u.reminderLimitPerPet;
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
     }
 
     match /plans/{planId} {
@@ -31,39 +20,54 @@ service cloud.firestore {
       allow read, write: if false; // audit log written by the Stripe webhook (Admin SDK only)
     }
 
+    match /stripeEvents/{eventId} {
+      allow read, write: if false; // webhook idempotency ledger (Admin SDK only)
+    }
+
     match /users/{userId} {
-      allow read: if request.auth != null && (
-        request.auth.uid == userId ||
-        request.auth.token.email == 'fernandomariodasmartins@gmail.com'
-      );
+      allow read: if isOwner(userId) || isAdmin();
 
       // Self-registration only ever creates a free-tier profile; any other
-      // plan must be granted by the admin or the Stripe webhook (Admin SDK).
-      allow create: if request.auth != null && (
-        (request.auth.uid == userId && request.resource.data.plan == 'free' && request.resource.data.planExpiresAt == '')
-        || request.auth.token.email == 'fernandomariodasmartins@gmail.com'
+      // plan must be granted by the admin (custom claim) or the Stripe
+      // webhook (Admin SDK, which bypasses rules entirely).
+      allow create: if isAdmin() || (
+        isOwner(userId)
+        && request.resource.data.plan == 'free'
+        && request.resource.data.planExpiresAt == ''
       );
 
-      // Users may update their own profile fields, but not the plan/quota
-      // fields — those are server-managed (Stripe webhook, admin panel,
-      // onUserPlanChangedSyncLimits Cloud Function).
-      allow update: if request.auth != null && (
-        (request.auth.uid == userId && !request.resource.data.diff(resource.data).affectedKeys()
-          .hasAny(['plan', 'planExpiresAt', 'petLimit', 'reminderLimitPerPet', 'petCount',
-                   'paymentFailedAt', 'stripeCustomerId', 'stripeSubscriptionId']))
-        || request.auth.token.email == 'fernandomariodasmartins@gmail.com'
+      // Users may update their own profile fields, but never the
+      // plan/quota/billing fields — those are server-managed (Stripe
+      // webhook, onUserPlanChangedSyncLimits, admin custom claim actions).
+      // Fails closed: any attempt to touch a protected key is denied
+      // outright rather than only checking the values being set.
+      allow update: if isAdmin() || (
+        isOwner(userId)
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+          'plan', 'planExpiresAt', 'petLimit', 'reminderLimitPerPet', 'petCount',
+          'paymentFailedAt', 'stripeCustomerId', 'stripeSubscriptionId',
+          'subscriptionStatus', 'cancelAtPeriodEnd'
+        ])
       );
 
       match /fcmTokens/{token} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read, write: if isOwner(userId);
       }
     }
 
     match /pets/{petId} {
-      allow read, delete: if request.auth != null && request.auth.uid == resource.data.userId;
-      allow create: if request.auth != null
-        && request.auth.uid == request.resource.data.userId
-        && withinPetLimit(request.auth.uid);
+      allow read: if request.auth != null && (request.auth.uid == resource.data.userId || isAdmin());
+
+      // Creation and deletion always go through the createPet/deletePet
+      // Callable Functions (functions/src/pets.ts), which validate the plan
+      // limit and update petCount atomically in the same transaction —
+      // something Firestore rules cannot do safely on their own. The Admin
+      // SDK those functions use bypasses these rules entirely, so closing
+      // both operations here is what actually enforces "no direct client
+      // writes", not a false sense of security from a limit check in rules.
+      allow create: if false;
+      allow delete: if false;
+
       allow update: if request.auth != null
         && request.auth.uid == resource.data.userId
         && request.auth.uid == request.resource.data.userId
@@ -71,21 +75,27 @@ service cloud.firestore {
     }
 
     match /reminders/{reminderId} {
-      allow read, delete: if request.auth != null && request.auth.uid == resource.data.userId;
-      allow create: if request.auth != null
-        && request.auth.uid == request.resource.data.userId
-        && withinReminderLimit(request.auth.uid, request.resource.data.petId);
+      allow read: if request.auth != null && (request.auth.uid == resource.data.userId || isAdmin());
+
+      // Same reasoning as pets/{petId} above — createReminder/deleteReminder
+      // Callable Functions own quota enforcement and counter updates.
+      allow create: if false;
+      allow delete: if false;
+
       allow update: if request.auth != null
         && request.auth.uid == resource.data.userId
-        && request.auth.uid == request.resource.data.userId;
+        && request.auth.uid == request.resource.data.userId
+        && request.resource.data.petId == resource.data.petId;
     }
 
     match /healthRecords/{recordId} {
-      allow read, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+      allow read: if request.auth != null && (request.auth.uid == resource.data.userId || isAdmin());
       allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+      allow delete: if request.auth != null && request.auth.uid == resource.data.userId;
       allow update: if request.auth != null
         && request.auth.uid == resource.data.userId
-        && request.auth.uid == request.resource.data.userId;
+        && request.auth.uid == request.resource.data.userId
+        && request.resource.data.petId == resource.data.petId;
     }
   }
 }
