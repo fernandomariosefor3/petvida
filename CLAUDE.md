@@ -14,8 +14,8 @@ Se o pedido for "adicionar cor", adicione cor — não mova código, não mude e
 
 ## Fluxo obrigatório para qualquer mudança
 1. Editar apenas os arquivos necessários para o que foi pedido
-2. Rodar `npm run build` para verificar se compila
-3. Fazer deploy: `firebase deploy --only hosting --project petvid-82a98`
+2. Rodar `npm run build` para verificar se compila (checagem local obrigatória)
+3. Commit + push para `main` — o deploy é automático via GitHub Actions (`.github/workflows/main.yml`); nunca rode `firebase deploy` manualmente
 
 ## Sobre imagens
 - Imagens de pets (cão, gato, pássaro, coelho) vêm do Unsplash via URL
