@@ -17,19 +17,29 @@ messaging.onBackgroundMessage((payload) => {
   self.registration.showNotification(title ?? 'PetVida Care', {
     body,
     icon: '/logo.png',
+    // Carried through to the click handler so the open can be attributed to
+    // the kind of reminder that triggered it.
+    data: { reminderType: (payload.data && payload.data.reminderType) || 'unknown' },
   });
 });
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  event.waitUntil(self.clients.openWindow('/reminders'));
+  // The service worker has no access to the app's analytics module, so the
+  // open is tagged on the URL and reported by src/lib/pushTracking.ts once the
+  // app boots. The params are stripped there so a refresh never double-counts.
+  const reminderType = (event.notification.data && event.notification.data.reminderType) || 'unknown';
+  const target = `/reminders?src=push&rtype=${encodeURIComponent(reminderType)}`;
+  event.waitUntil(self.clients.openWindow(target));
 });
 
 // --- PWA offline caching ---
 // This is the same file used for FCM background push (above), reused here so
 // only one service worker is ever registered for scope '/' — registering a
 // second file at the same scope would silently replace this one and break push.
-const CACHE_NAME = 'petvida-cache-v1';
+// Bumped when this file changes so the activate handler evicts the previous
+// cache and clients don't keep serving assets from the old service worker.
+const CACHE_NAME = 'petvida-cache-v2';
 const OFFLINE_URL = '/offline.html';
 
 self.addEventListener('install', (event) => {
