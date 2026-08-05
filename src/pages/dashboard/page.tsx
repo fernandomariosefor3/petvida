@@ -70,7 +70,7 @@ const statConfig = [
 ];
 
 export default function DashboardPage() {
-  const { currentUser, pets, reminders, healthRecords, getPetById, isPremium, toggleReminder } = useApp();
+  const { currentUser, pets, reminders, healthRecords, getPetById, isPro, toggleReminder } = useApp();
   const [celebration, setCelebration] = useState<string | null>(null);
 
   const today = new Date();
@@ -222,7 +222,7 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
           {/* Upgrade banner for free users */}
-          {!isPremium && (
+          {!isPro && (
             <div className="lg:col-span-3 bg-orange-500 rounded-xl p-5 flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -230,7 +230,7 @@ export default function DashboardPage() {
                 </div>
                 <div>
                   <p className="text-white font-semibold text-sm">Desbloqueie todo o potencial do PetVida</p>
-                  <p className="text-orange-100 text-xs mt-0.5">Pets ilimitados, upload de fotos e mais por R$29,99/ano</p>
+                  <p className="text-orange-100 text-xs mt-0.5">Export em PDF do histórico por R$14,99/ano</p>
                 </div>
               </div>
               <Link to="/planos" className="px-4 py-2 bg-white text-orange-600 font-semibold text-xs rounded-lg hover:bg-orange-50 transition-colors cursor-pointer whitespace-nowrap flex-shrink-0">

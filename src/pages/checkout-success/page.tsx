@@ -8,7 +8,7 @@ export default function CheckoutSuccessPage() {
   const [visible, setVisible] = useState(false);
   const { planId } = useApp();
   const { plans } = usePlans();
-  const purchasedPlan = planId === 'free' ? plans.premium : plans[planId];
+  const purchasedPlan = planId === 'free' ? plans.pro : plans[planId];
 
   useEffect(() => {
     const t = setTimeout(() => setVisible(true), 80);
@@ -62,7 +62,7 @@ export default function CheckoutSuccessPage() {
                   <i className="ri-information-line text-amber-500"></i>
                 </div>
                 <p className="text-amber-800 text-sm leading-relaxed">
-                  Um <strong>recibo do pagamento</strong> foi enviado para o seu e-mail pela Stripe. Pode levar até 1 minuto para o seu plano aparecer como Premium no app.
+                  Um <strong>recibo do pagamento</strong> foi enviado para o seu e-mail pela Stripe. Pode levar até 1 minuto para o seu plano aparecer como Pro no app.
                 </p>
               </div>
 

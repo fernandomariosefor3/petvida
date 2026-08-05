@@ -80,7 +80,7 @@ export default function HomePage() {
     inLanguage: 'pt-BR',
     offers: [
       { '@type': 'Offer', name: 'Plano Grátis', price: '0', priceCurrency: 'BRL' },
-      { '@type': 'Offer', name: 'Plano Premium', price: '29.99', priceCurrency: 'BRL', billingIncrement: 'P1Y' },
+      { '@type': 'Offer', name: 'Plano Pro', price: '14.99', priceCurrency: 'BRL', billingIncrement: 'P1Y' },
     ],
   }), [siteUrl]);
 
@@ -372,13 +372,13 @@ export default function HomePage() {
                 <p className="text-gray-400 text-sm mt-1">para sempre</p>
               </div>
               <ul className="space-y-3 mb-8 flex-1">
-                {['Até 3 pets cadastrados', '5 lembretes por pet', 'Histórico de saúde', 'Dashboard personalizado'].map((item) => (
+                {['Pets ilimitados', 'Lembretes ilimitados', 'Histórico de saúde', 'Upload de fotos', 'Dashboard personalizado'].map((item) => (
                   <li key={item} className="flex items-center gap-3">
                     <i className="ri-check-line text-orange-500 text-base"></i>
                     <span className="text-gray-600 text-sm">{item}</span>
                   </li>
                 ))}
-                {['Upload de fotos', 'Exportar dados', 'Suporte prioritário'].map((item) => (
+                {['Exportar dados', 'Suporte prioritário'].map((item) => (
                   <li key={item} className="flex items-center gap-3">
                     <i className="ri-close-line text-gray-300 text-base"></i>
                     <span className="text-gray-300 text-sm">{item}</span>
@@ -390,7 +390,7 @@ export default function HomePage() {
               </Link>
             </div>
 
-            {/* Plano Premium */}
+            {/* Plano Pro */}
             <div className="bg-gradient-to-br from-orange-500 to-amber-500 rounded-3xl p-8 flex flex-col relative overflow-hidden hover:shadow-xl transition-shadow">
               <div className="absolute top-5 right-5 bg-white text-orange-600 text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap">
                 ★ Mais popular
@@ -399,19 +399,19 @@ export default function HomePage() {
                 <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center mb-4">
                   <i className="ri-vip-crown-line text-white text-xl"></i>
                 </div>
-                <h3 className="text-xl font-bold text-white mb-1">Premium</h3>
+                <h3 className="text-xl font-bold text-white mb-1">Pro</h3>
                 <p className="text-orange-100 text-sm">Tudo liberado para quem leva o cuidado a sério.</p>
               </div>
               <div className="mb-8">
                 <div className="flex items-end gap-1">
                   <span className="text-orange-200 text-lg font-medium">R$</span>
-                  <span className="text-5xl font-bold text-white">29</span>
+                  <span className="text-5xl font-bold text-white">14</span>
                   <span className="text-5xl font-bold text-white">,99</span>
                 </div>
-                <p className="text-orange-200 text-sm mt-1">por ano — apenas R$2,50/mês</p>
+                <p className="text-orange-200 text-sm mt-1">por ano — apenas R$1,25/mês</p>
               </div>
               <ul className="space-y-3 mb-8 flex-1">
-                {['Pets ilimitados', 'Lembretes ilimitados', 'Histórico completo', 'Upload de fotos', 'Exportar dados', 'Suporte prioritário', 'Badge Premium'].map((item) => (
+                {['Pets ilimitados', 'Lembretes ilimitados', 'Histórico completo', 'Upload de fotos', 'Exportar dados', 'Suporte prioritário'].map((item) => (
                   <li key={item} className="flex items-center gap-3">
                     <i className="ri-check-line text-white text-base"></i>
                     <span className="text-orange-50 text-sm">{item}</span>
@@ -419,7 +419,7 @@ export default function HomePage() {
                 ))}
               </ul>
               <Link to="/register" className="w-full py-3.5 rounded-2xl bg-white text-orange-600 font-bold text-center hover:bg-orange-50 transition-all cursor-pointer whitespace-nowrap flex items-center justify-center gap-2">
-                Assinar Premium
+                Assinar Pro
               </Link>
             </div>
           </div>

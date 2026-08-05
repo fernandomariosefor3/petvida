@@ -1,5 +1,4 @@
 process.env.STRIPE_PRO_PRICE_ID = 'price_test_pro';
-process.env.STRIPE_PREMIUM_PRICE_ID = 'price_test_premium';
 
 import { test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
@@ -53,18 +52,7 @@ test('an unrecognized price ID throws and never writes a plan to the user doc', 
   assert.equal(snap.data()?.plan, 'free', 'plan must remain untouched after an unknown price ID');
 });
 
-test('switching from Pro to Premium price updates the plan on the next sync', async () => {
-  await db.doc('users/user1').set({ plan: 'free' });
-  await syncSubscription(fakeSubscription({ status: 'active', priceId: 'price_test_pro' }));
-  let snap = await db.doc('users/user1').get();
-  assert.equal(snap.data()?.plan, 'pro');
-
-  await syncSubscription(fakeSubscription({ status: 'active', priceId: 'price_test_premium' }));
-  snap = await db.doc('users/user1').get();
-  assert.equal(snap.data()?.plan, 'premium');
-});
-
-test('past_due status keeps plan access but flags paymentFailedAt', async () => {
+test('a past_due status keeps plan access but flags paymentFailedAt', async () => {
   await db.doc('users/user1').set({ plan: 'pro' });
   await syncSubscription(fakeSubscription({ status: 'past_due', priceId: 'price_test_pro' }));
 
@@ -74,7 +62,7 @@ test('past_due status keeps plan access but flags paymentFailedAt', async () => 
 });
 
 test('customer.subscription.deleted downgrades to free even without resolving a price', async () => {
-  await db.doc('users/user1').set({ plan: 'premium', planExpiresAt: '2026-12-01' });
+  await db.doc('users/user1').set({ plan: 'pro', planExpiresAt: '2026-12-01' });
   await handleSubscriptionDeleted(fakeSubscription({ status: 'canceled' }));
 
   const snap = await db.doc('users/user1').get();

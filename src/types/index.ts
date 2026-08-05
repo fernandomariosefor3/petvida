@@ -1,4 +1,4 @@
-export type Plan = 'free' | 'pro' | 'premium';
+export type Plan = 'free' | 'pro';
 
 export interface NotificationSettings {
   remindersEnabled: boolean;
@@ -96,24 +96,18 @@ export function isUnlimited(limit: number): boolean {
 
 // Fallback plan limits, used until the 'plans' Firestore collection loads (see src/lib/plans.ts).
 // Keep these in sync with the seed data in scripts/seed-plans.mjs.
-// price (Pro: 1490, Premium: 2999, in cents) — AGUARDANDO CONFIRMAÇÃO COMERCIAL.
+// price (Pro: 1499, in cents) — R$ 14,99/ano, decisão comercial da v3.
 export const PLAN_LIMITS: Record<Plan, PlanConfig> = {
   free: {
     id: 'free', name: 'Grátis', label: 'Grátis',
-    maxPets: 3, maxRemindersPerPet: 5,
-    photoUpload: false, healthRecords: true, exportData: false,
+    maxPets: UNLIMITED, maxRemindersPerPet: UNLIMITED,
+    photoUpload: true, healthRecords: true, exportData: false,
     price: 0, active: true, order: 0,
   },
   pro: {
     id: 'pro', name: 'Pro', label: 'Pro',
-    maxPets: 10, maxRemindersPerPet: 15,
-    photoUpload: true, healthRecords: true, exportData: false,
-    price: 1490, active: true, order: 1,
-  },
-  premium: {
-    id: 'premium', name: 'Premium', label: 'Premium',
     maxPets: UNLIMITED, maxRemindersPerPet: UNLIMITED,
     photoUpload: true, healthRecords: true, exportData: true,
-    price: 2999, active: true, order: 2,
+    price: 1499, active: true, order: 1,
   },
 };

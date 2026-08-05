@@ -10,7 +10,7 @@ const IS_PAST_DUE = new Set<Stripe.Subscription.Status>(['past_due', 'unpaid', '
 
 export interface SubscriptionSyncResult {
   userId: string;
-  plan: 'free' | 'pro' | 'premium';
+  plan: 'free' | 'pro';
   status: Stripe.Subscription.Status;
 }
 

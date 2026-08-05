@@ -12,13 +12,8 @@ const ACCENT: Record<Plan, { border: string; borderActive: string; badge: string
     badge: 'bg-emerald-100 text-emerald-700', price: 'text-gray-800', button: '',
   },
   pro: {
-    border: 'border-gray-100', borderActive: 'border-blue-400',
-    badge: 'bg-blue-100 text-blue-700', price: 'text-blue-600',
-    button: 'bg-blue-500 hover:bg-blue-600',
-  },
-  premium: {
     border: 'border-gray-100', borderActive: 'border-orange-400',
-    badge: 'bg-orange-100 text-orange-700', price: 'text-orange-500',
+    badge: 'bg-orange-100 text-orange-700', price: 'text-orange-600',
     button: 'bg-orange-500 hover:bg-orange-600',
   },
 };
@@ -35,7 +30,7 @@ export default function PlanosPage() {
   const [checkoutError, setCheckoutError] = useState('');
   if (!currentUser) return null;
 
-  async function handleStripeCheckout(targetPlan: 'pro' | 'premium') {
+  async function handleStripeCheckout(targetPlan: 'pro') {
     trackEvent('upgrade_clicked', { from_plan: planId, to_plan: targetPlan });
     setCheckoutLoading(targetPlan);
     setCheckoutError('');
@@ -67,7 +62,7 @@ export default function PlanosPage() {
         </div>
 
         {planId !== 'free' && (
-          <div className={`rounded-2xl p-5 mb-8 flex items-center gap-4 ${planId === 'premium' ? 'bg-gradient-to-r from-orange-500 to-orange-400' : 'bg-gradient-to-r from-blue-500 to-blue-400'}`}>
+          <div className={`rounded-2xl p-5 mb-8 flex items-center gap-4 bg-gradient-to-r from-orange-500 to-orange-400`}>
             <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
               <i className="ri-vip-crown-line text-white text-2xl"></i>
             </div>
@@ -81,15 +76,15 @@ export default function PlanosPage() {
         )}
 
         {/* Plan cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-          {(['free', 'pro', 'premium'] as Plan[]).map((tier) => {
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+          {(['free', 'pro'] as Plan[]).map((tier) => {
             const plan = plans[tier];
             const isCurrent = planId === tier;
             const accent = ACCENT[tier];
             return (
               <div key={tier} className={`bg-white rounded-2xl border-2 p-6 relative overflow-hidden ${isCurrent ? accent.borderActive : accent.border}`}>
                 {tier === 'pro' && (
-                  <div className="absolute top-0 right-0 bg-blue-500 text-white text-[10px] font-bold px-4 py-1 transform rotate-45 translate-x-6 translate-y-2">Popular</div>
+                  <div className="absolute top-0 right-0 bg-orange-500 text-white text-[10px] font-bold px-4 py-1 transform rotate-45 translate-x-6 translate-y-2">Popular</div>
                 )}
                 {isCurrent && (
                   <span className={`inline-block text-xs font-bold px-3 py-1 rounded-full mb-4 ${accent.badge}`}>
@@ -121,7 +116,7 @@ export default function PlanosPage() {
                 ) : (
                   <div className="space-y-2.5">
                     <button
-                      onClick={() => handleStripeCheckout(tier as 'pro' | 'premium')}
+                      onClick={() => handleStripeCheckout(tier as 'pro')}
                       disabled={checkoutLoading !== null}
                       className={`flex items-center justify-center gap-2 w-full py-3 text-center disabled:opacity-60 text-white font-bold rounded-xl transition-colors cursor-pointer ${accent.button}`}
                     >
@@ -149,7 +144,7 @@ export default function PlanosPage() {
         {checkoutError && <p className="text-red-500 text-xs text-center -mt-6 mb-6">{checkoutError}</p>}
 
         {/* How it works */}
-        {planId !== 'premium' && (
+        {planId !== 'pro' && (
           <div className="mt-8 bg-orange-50 rounded-2xl p-6 border border-orange-100">
             <h3 className="font-bold text-gray-800 mb-4"><i className="ri-question-line mr-1 text-orange-500"></i>Como assinar por PIX/WhatsApp?</h3>
             <div className="space-y-3 text-sm text-gray-600">

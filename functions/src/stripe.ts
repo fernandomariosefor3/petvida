@@ -10,7 +10,7 @@ import { claimEvent, markEventSucceeded, markEventFailed, EventAlreadyProcessedE
 const SITE_URL = 'https://petvida.net.br';
 
 function isPayingPlan(value: unknown): value is PayingPlan {
-  return value === 'pro' || value === 'premium';
+  return value === 'pro';
 }
 
 export const createCheckoutSession = onCall({ secrets: [stripeSecretKey] }, async (request) => {

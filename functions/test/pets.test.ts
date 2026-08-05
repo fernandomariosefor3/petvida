@@ -48,7 +48,7 @@ test('two concurrent creations never exceed a limit of 1', async () => {
   assert.equal(petsSnap.size, 1);
 });
 
-test('premium (unlimited) plan can create many pets', async () => {
+test('pro (unlimited) plan can create many pets', async () => {
   await seedUser('user1', UNLIMITED);
   for (let i = 0; i < 5; i++) {
     await createPetTransaction(db, 'user1', { name: `Pet${i}`, species: 'Cão' });

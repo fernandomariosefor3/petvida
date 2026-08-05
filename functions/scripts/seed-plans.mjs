@@ -6,10 +6,8 @@
 //   GOOGLE_APPLICATION_CREDENTIALS=/path/to/serviceAccountKey.json \
 //     node scripts/seed-plans.mjs --project petvid-82a98 [--dry-run] [--yes]
 //
-// Prices below (1490 = R$14,90/ano Pro; 2999 = R$29,99/ano Premium) are
-// AGUARDANDO CONFIRMAÇÃO COMERCIAL — placeholders, not approved final
-// pricing. Adjust them (or wire this script to read from a config file)
-// before relying on them for real charges.
+// Prices below (1499 = R$14,99/ano Pro) — decisão comercial da v3:
+// Grátis com pets/lembretes ilimitados; Pro adiciona export em PDF.
 
 import admin from 'firebase-admin';
 
@@ -58,30 +56,21 @@ const db = admin.firestore();
 const plans = {
   free: {
     name: 'Grátis',
-    maxPets: 3,
-    maxRemindersPerPet: 5,
-    features: ['healthRecords'],
+    maxPets: -1,
+    maxRemindersPerPet: -1,
+    features: ['healthRecords', 'photoUpload'],
     price: 0,
     active: true,
     order: 0,
   },
   pro: {
     name: 'Pro',
-    maxPets: 10,
-    maxRemindersPerPet: 15,
-    features: ['healthRecords', 'photoUpload'],
-    price: 1490, // placeholder cents — NOT final pricing
-    active: true,
-    order: 1,
-  },
-  premium: {
-    name: 'Premium',
     maxPets: -1,
     maxRemindersPerPet: -1,
     features: ['healthRecords', 'photoUpload', 'exportData'],
-    price: 2999, // placeholder cents — NOT final pricing
+    price: 1499, // R$ 14,99/ano
     active: true,
-    order: 2,
+    order: 1,
   },
 };
 

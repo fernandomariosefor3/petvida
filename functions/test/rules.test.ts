@@ -40,7 +40,7 @@ beforeEach(async () => {
 
 test('a user cannot alter their own plan field directly', async () => {
   const db = testEnv.authenticatedContext('user1').firestore();
-  await assertFails(updateDoc(doc(db, 'users/user1'), { plan: 'premium' }));
+  await assertFails(updateDoc(doc(db, 'users/user1'), { plan: 'pro' }));
 });
 
 test('a user cannot alter their own petCount/petLimit directly', async () => {
@@ -89,12 +89,12 @@ test('an admin custom claim can read and update another user\'s plan', async () 
   });
   const adminDb = testEnv.authenticatedContext('admin-uid', { admin: true }).firestore();
   await assertSucceeds(getDoc(doc(adminDb, 'users/user2')));
-  await assertSucceeds(updateDoc(doc(adminDb, 'users/user2'), { plan: 'premium', planExpiresAt: '2026-12-01' }));
+  await assertSucceeds(updateDoc(doc(adminDb, 'users/user2'), { plan: 'pro', planExpiresAt: '2026-12-01' }));
 });
 
 test('a non-admin authenticated user cannot use admin-only escalation', async () => {
   const db = testEnv.authenticatedContext('user1', { admin: false }).firestore();
-  await assertFails(updateDoc(doc(db, 'users/user1'), { plan: 'premium' }));
+  await assertFails(updateDoc(doc(db, 'users/user1'), { plan: 'pro' }));
 });
 
 test('unauthenticated requests are denied entirely (fail closed)', async () => {

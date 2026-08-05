@@ -9,7 +9,7 @@ export class UnknownPriceIdError extends Error {
 
 /**
  * Resolves a Stripe Price ID to a plan. Never falls back to a default plan —
- * an unrecognized price ID must never silently grant Free, Pro, or Premium.
+ * an unrecognized price ID must never silently grant Free or Pro.
  * Callers are expected to catch UnknownPriceIdError, log it, leave the
  * user's plan untouched, and rethrow so the Stripe webhook retries.
  */

@@ -11,7 +11,7 @@ const navItems = [
 ];
 
 export default function AppSidebar() {
-  const { currentUser, logout, pets, reminders, isPremium, isPro, isFree, isAdmin } = useApp();
+  const { currentUser, logout, pets, reminders, isPro, isFree, isAdmin } = useApp();
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
 
@@ -53,11 +53,10 @@ export default function AppSidebar() {
               <p className="text-sm font-semibold text-gray-800 truncate">{currentUser.name}</p>
               <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
                 isAdmin ? 'bg-purple-100 text-purple-600'
-                : isPremium ? 'bg-orange-100 text-orange-600'
                 : isPro ? 'bg-blue-100 text-blue-600'
                 : 'bg-gray-100 text-gray-500'
               }`}>
-                {isAdmin ? 'Admin' : isPremium ? 'Premium' : isPro ? 'Pro' : 'Grátis'}
+                {isAdmin ? 'Admin' : isPro ? 'Pro' : 'Grátis'}
               </span>
             </div>
           </div>
@@ -98,7 +97,7 @@ export default function AppSidebar() {
                   {badgeCount}
                 </span>
               )}
-              {!collapsed && isPlanos && !isPremium && (
+              {!collapsed && isPlanos && !isPro && (
                 <span className="bg-orange-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">UP</span>
               )}
             </NavLink>
@@ -107,14 +106,14 @@ export default function AppSidebar() {
       </nav>
 
       {/* Upgrade banner for free users */}
-      {!collapsed && !isPremium && !isAdmin && (
+      {!collapsed && !isPro && !isAdmin && (
         <div className="mx-3 mb-3 px-4 py-3 rounded-xl bg-orange-500 cursor-pointer hover:bg-orange-600 transition-colors"
           onClick={() => navigate('/planos')}>
           <div className="flex items-center gap-2 mb-0.5">
             <i className="ri-vip-crown-line text-white text-sm"></i>
-            <p className="text-xs text-white font-bold">Seja Premium</p>
+            <p className="text-xs text-white font-bold">Seja Pro</p>
           </div>
-          <p className="text-[10px] text-orange-100 leading-tight">Pets ilimitados por R$29,99/ano</p>
+          <p className="text-[10px] text-orange-100 leading-tight">Export em PDF por R$14,99/ano</p>
         </div>
       )}
 

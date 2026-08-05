@@ -23,11 +23,10 @@ function useAppValue() {
     : 'free';
   const isFree = planId === 'free';
   const isPro = planId === 'pro';
-  const isPremium = planId === 'premium';
   const planLimits = plans[planId];
   const canAddPet = isUnlimited(planLimits.maxPets) || data.pets.length < planLimits.maxPets;
   const canUploadPhoto = planLimits.photoUpload;
-  return { ...auth, ...data, planId, isFree, isPro, isPremium, planLimits, canAddPet, canUploadPhoto };
+  return { ...auth, ...data, planId, isFree, isPro, planLimits, canAddPet, canUploadPhoto };
 }
 
 function AppContextBridge({ children }: { children: ReactNode }) {

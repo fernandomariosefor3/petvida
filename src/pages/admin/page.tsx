@@ -33,8 +33,7 @@ type FilterType = 'all' | Plan;
 
 const PLAN_META: Record<Plan, { label: string; emoji: string; badgeClass: string; avatarClass: string; solidClass: string }> = {
   free: { label: 'Grátis', emoji: '🆓', badgeClass: 'bg-gray-100 text-gray-500', avatarClass: 'bg-emerald-100 text-emerald-600', solidClass: 'bg-gray-400 hover:bg-gray-500' },
-  pro: { label: 'Pro', emoji: '⭐', badgeClass: 'bg-blue-100 text-blue-600', avatarClass: 'bg-blue-100 text-blue-600', solidClass: 'bg-blue-500 hover:bg-blue-600' },
-  premium: { label: 'Premium', emoji: '👑', badgeClass: 'bg-orange-100 text-orange-600', avatarClass: 'bg-orange-100 text-orange-600', solidClass: 'bg-orange-500 hover:bg-orange-600' },
+  pro: { label: 'Pro', emoji: '⭐', badgeClass: 'bg-orange-100 text-orange-600', avatarClass: 'bg-orange-100 text-orange-600', solidClass: 'bg-orange-500 hover:bg-orange-600' },
 };
 
 const PawBg = () => (
@@ -48,7 +47,7 @@ const PawBg = () => (
 );
 
 function getActivePlan(user: UserRecord): Plan {
-  if (user.plan !== 'pro' && user.plan !== 'premium') return 'free';
+  if (user.plan !== 'pro') return 'free';
   if (!user.planExpiresAt) return 'free';
   return new Date(user.planExpiresAt) > new Date() ? (user.plan as Plan) : 'free';
 }
@@ -65,14 +64,14 @@ export default function AdminPage() {
 
   // Modal novo cliente
   const [showNewModal, setShowNewModal] = useState(false);
-  const [newForm, setNewForm] = useState<{ name: string; email: string; password: string; months: string; plan: Plan }>({ name: '', email: '', password: '', months: '12', plan: 'premium' });
+  const [newForm, setNewForm] = useState<{ name: string; email: string; password: string; months: string; plan: Plan }>({ name: '', email: '', password: '', months: '12', plan: 'pro' });
   const [creating, setCreating] = useState(false);
   const [newError, setNewError] = useState('');
 
   // Ativar plano por email
   const [quickEmail, setQuickEmail] = useState('');
   const [quickMonths, setQuickMonths] = useState('12');
-  const [quickPlan, setQuickPlan] = useState<Plan>('premium');
+  const [quickPlan, setQuickPlan] = useState<Plan>('pro');
   const [quickLoading, setQuickLoading] = useState(false);
   const [quickMsg, setQuickMsg] = useState<{ text: string; ok: boolean } | null>(null);
 
@@ -130,7 +129,7 @@ export default function AdminPage() {
         ? `✨ ${newForm.name} cadastrado no plano Grátis!`
         : `✨ ${newForm.name} cadastrado como ${planLabel} até ${formatDate(planExpiresAt)}!`, 'success');
       setShowNewModal(false);
-      setNewForm({ name: '', email: '', password: '', months: '12', plan: 'premium' });
+      setNewForm({ name: '', email: '', password: '', months: '12', plan: 'pro' });
       await fetchUsers();
     } catch (err: unknown) {
       const code = (err as { code?: string }).code;
@@ -164,7 +163,7 @@ export default function AdminPage() {
     setUpdating(user.id);
     try {
       const activePlan = getActivePlan(user);
-      const plan = activePlan === 'free' ? 'premium' : activePlan;
+      const plan = activePlan === 'free' ? 'pro' : activePlan;
       const base = activePlan !== 'free' && user.planExpiresAt ? new Date(user.planExpiresAt) : new Date();
       base.setMonth(base.getMonth() + months);
       const expiresAt = base.toISOString().split('T')[0];
@@ -217,9 +216,8 @@ export default function AdminPage() {
   });
 
   const totalUsers = users.length;
-  const totalPremium = users.filter(u => getActivePlan(u) === 'premium').length;
   const totalPro = users.filter(u => getActivePlan(u) === 'pro').length;
-  const totalFree = totalUsers - totalPremium - totalPro;
+  const totalFree = totalUsers - totalPro;
 
   if (!isAdmin) return null;
 
@@ -258,8 +256,7 @@ export default function AdminPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {[
             { label: 'Total usuários', value: totalUsers, emoji: '👥', gradient: 'from-slate-50 to-gray-50', border: 'border-gray-100', text: 'text-gray-800' },
-            { label: 'Premium ativos', value: totalPremium, emoji: '👑', gradient: 'from-orange-50 to-amber-50', border: 'border-orange-100', text: 'text-orange-600' },
-            { label: 'Pro ativos', value: totalPro, emoji: '⭐', gradient: 'from-blue-50 to-sky-50', border: 'border-blue-100', text: 'text-blue-600' },
+            { label: 'Pro ativos', value: totalPro, emoji: '⭐', gradient: 'from-orange-50 to-amber-50', border: 'border-orange-100', text: 'text-orange-600' },
             { label: 'Plano grátis', value: totalFree, emoji: '🆓', gradient: 'from-emerald-50 to-teal-50', border: 'border-emerald-100', text: 'text-emerald-700' },
           ].map(stat => (
             <div key={stat.label} className={`bg-gradient-to-br ${stat.gradient} rounded-2xl p-5 border ${stat.border} shadow-sm relative overflow-hidden`}>
@@ -286,7 +283,7 @@ export default function AdminPage() {
               className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400"
             />
             <div className="flex gap-2">
-              {(['pro', 'premium'] as Plan[]).map(p => (
+              {(['pro'] as Plan[]).map(p => (
                 <button key={p} onClick={() => setQuickPlan(p)}
                   className={`px-3 py-2.5 rounded-xl text-xs font-semibold border-2 transition cursor-pointer whitespace-nowrap ${quickPlan === p ? `border-current ${PLAN_META[p].badgeClass}` : 'border-gray-100 text-gray-500 hover:border-gray-200'}`}>
                   {PLAN_META[p].emoji} {PLAN_META[p].label}
@@ -320,7 +317,7 @@ export default function AdminPage() {
               className="w-full pl-9 pr-4 py-2.5 bg-white border border-orange-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-orange-200 shadow-sm" />
           </div>
           <div className="flex gap-2">
-            {(['all', 'premium', 'pro', 'free'] as FilterType[]).map(f => (
+            {(['all', 'pro', 'free'] as FilterType[]).map(f => (
               <button key={f} onClick={() => setFilter(f)}
                 className={`px-4 py-2 rounded-xl text-sm font-semibold transition cursor-pointer whitespace-nowrap ${filter === f ? 'bg-orange-500 text-white shadow-sm' : 'bg-white border border-gray-200 text-gray-600 hover:border-orange-300'}`}>
                 {f === 'all' ? 'Todos' : `${PLAN_META[f].emoji} ${PLAN_META[f].label}`}
@@ -400,7 +397,7 @@ export default function AdminPage() {
                               </button>
                             </>
                           )}
-                          {(['free', 'pro', 'premium'] as Plan[]).filter(p => p !== activePlan).map(p => (
+                          {(['free', 'pro'] as Plan[]).filter(p => p !== activePlan).map(p => (
                             <button key={p} onClick={() => setUserPlan(user, p)} disabled={isUpdating}
                               className={`text-xs px-3 py-1.5 rounded-lg font-bold transition cursor-pointer disabled:opacity-50 flex items-center gap-1.5 whitespace-nowrap ${
                                 p === 'free' ? 'bg-red-50 text-red-500 hover:bg-red-100 border border-red-100' : `${PLAN_META[p].solidClass} text-white`
@@ -482,8 +479,8 @@ export default function AdminPage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Plano</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {(['free', 'pro', 'premium'] as Plan[]).map(p => (
+                <div className="grid grid-cols-2 gap-2">
+                  {(['free', 'pro'] as Plan[]).map(p => (
                     <button key={p} type="button" onClick={() => setNewForm({...newForm, plan: p})}
                       className={`py-2 rounded-xl text-xs font-semibold border-2 transition cursor-pointer ${newForm.plan === p ? `border-current ${PLAN_META[p].badgeClass}` : 'border-gray-100 text-gray-500 hover:border-gray-200'}`}>
                       {PLAN_META[p].emoji} {PLAN_META[p].label}
