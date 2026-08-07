@@ -1,6 +1,7 @@
 import { createContext, useContext, ReactNode } from 'react';
 import { AuthProvider, useAuth } from '@/contexts/auth/AuthContext';
 import { DataProvider, useData } from '@/contexts/data/DataContext';
+import { GuestProvider } from '@/contexts/guest/GuestContext';
 import { usePlans } from '@/lib/plans';
 import { Plan, isUnlimited } from '@/types';
 
@@ -36,11 +37,13 @@ function AppContextBridge({ children }: { children: ReactNode }) {
 
 export function AppProvider({ children }: { children: ReactNode }) {
   return (
-    <AuthProvider>
-      <DataProvider>
-        <AppContextBridge>{children}</AppContextBridge>
-      </DataProvider>
-    </AuthProvider>
+    <GuestProvider>
+      <AuthProvider>
+        <DataProvider>
+          <AppContextBridge>{children}</AppContextBridge>
+        </DataProvider>
+      </AuthProvider>
+    </GuestProvider>
   );
 }
 

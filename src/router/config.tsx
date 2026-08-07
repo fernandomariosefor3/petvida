@@ -2,6 +2,7 @@ import AdminPage from '@/pages/admin/page';
 import { RouteObject } from 'react-router-dom';
 import HomePage from '@/pages/home/page';
 import RegistrationPage from '@/pages/registration/page';
+import GuestPetPage from '@/pages/guest-pet/page';
 import CheckoutSuccessPage from '@/pages/checkout-success/page';
 import DashboardPage from '@/pages/dashboard/page';
 import PetsPage from '@/pages/pets/page';
@@ -18,6 +19,7 @@ import NotFound from '@/pages/NotFound';
 const routes: RouteObject[] = [
   { path: '/', element: <HomePage /> },
   { path: '/register', element: <RegistrationPage /> },
+  { path: '/carteirinha-teste', element: <GuestPetPage /> },
   { path: '/checkout-success', element: <CheckoutSuccessPage /> },
   { path: '/faq', element: <FaqPage /> },
   {

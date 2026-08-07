@@ -175,8 +175,8 @@ export default function HomePage() {
                 Gerencie vacinas, consultas, nutrição e a saúde completa dos seus pets em um só lugar. Simples, bonito e gratuito.
               </p>
               <div className="flex flex-col sm:flex-row items-center lg:items-start gap-4">
-                <Link to="/register" className="px-8 py-4 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-full transition-all text-base cursor-pointer whitespace-nowrap shadow-lg hover:shadow-xl">
-                  Começar gratuitamente
+                <Link to="/carteirinha-teste" className="px-8 py-4 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-full transition-all text-base cursor-pointer whitespace-nowrap shadow-lg hover:shadow-xl">
+                  Criar carteirinha do meu pet agora (sem cadastro)
                 </Link>
                 <a href="#showcase" className="px-8 py-4 bg-white/15 backdrop-blur-sm hover:bg-white/25 border border-white/30 text-white font-semibold rounded-full transition-all text-base cursor-pointer whitespace-nowrap">
                   Ver recursos

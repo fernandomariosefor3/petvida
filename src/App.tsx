@@ -8,6 +8,7 @@ import { initAnalyticsIfConsented } from "./lib/firebase";
 import { trackEvent } from "./lib/analytics";
 import { reportPushOpenFromUrl } from "./lib/pushTracking";
 import ActivityTracker from "./components/feature/ActivityTracker";
+import GuestPetClaimer from "./components/feature/GuestPetClaimer";
 
 
 function App() {
@@ -27,6 +28,7 @@ function App() {
       <BrowserRouter basename={__BASE_PATH__}>
         <AppProvider>
           <ActivityTracker />
+          <GuestPetClaimer />
           <AppRoutes />
         </AppProvider>
       </BrowserRouter>
