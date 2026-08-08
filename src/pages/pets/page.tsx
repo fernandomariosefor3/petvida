@@ -15,6 +15,18 @@ const defaultForm: PetFormData = {
   color: '', gender: 'male', photo: '', microchip: '', neutered: false,
   bloodType: '', allergies: '', notes: '',
 };
+const MAX_PHOTO_SIZE_BYTES = 5 * 1024 * 1024;
+
+function getPhotoUploadErrorMessage(err: unknown): string {
+  const code = (err as { code?: string })?.code;
+  if (code === 'storage/unauthorized') return 'Sem permissão para enviar a foto. Faça login novamente.';
+  if (code === 'storage/canceled') return 'Envio da foto cancelado.';
+  if (code === 'storage/retry-limit-exceeded' || code === 'storage/quota-exceeded') {
+    return 'Falha de conexão ao enviar a foto. Verifique sua internet e tente novamente.';
+  }
+  if (err instanceof TypeError) return 'Falha de conexão. Verifique sua internet e tente novamente.';
+  return 'Não foi possível enviar a foto. Tente novamente.';
+}
 
 export default function PetsPage() {
   const { currentUser, pets, reminders, addPet, updatePet, deletePet, uploadPhoto, canAddPet, canUploadPhoto, planLimits } = useApp();
@@ -26,6 +38,7 @@ export default function PetsPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [photoError, setPhotoError] = useState<string | null>(null);
   const [upgradeReason, setUpgradeReason] = useState<'pets' | 'photo' | null>(null);
   const [showCompare, setShowCompare] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -40,25 +53,44 @@ export default function PetsPage() {
 
   const openAdd = () => {
     if (!canAddPet) { setUpgradeReason('pets'); return; }
-    setForm(defaultForm); setEditingId(null); setShowForm(true);
+    setForm(defaultForm); setEditingId(null); setPhotoError(null); setShowForm(true);
   };
 
   const openEdit = (pet: Pet) => {
     setForm({ name: pet.name, species: pet.species, breed: pet.breed, birthDate: pet.birthDate, weight: pet.weight, color: pet.color, gender: pet.gender, photo: pet.photo, notes: pet.notes, microchip: pet.microchip, neutered: pet.neutered, bloodType: pet.bloodType, allergies: pet.allergies });
-    setEditingId(pet.id); setShowForm(true);
+    setEditingId(pet.id); setPhotoError(null); setShowForm(true);
   };
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!canUploadPhoto) { setUpgradeReason('photo'); return; }
-    const file = e.target.files?.[0];
+    const input = e.target;
+    const file = input.files?.[0];
     if (!file) return;
+    setPhotoError(null);
+
+    if (!file.type.startsWith('image/')) {
+      setPhotoError('Selecione um arquivo de imagem.');
+      input.value = '';
+      return;
+    }
+    if (file.size > MAX_PHOTO_SIZE_BYTES) {
+      setPhotoError('A imagem deve ter no máximo 5 MB.');
+      input.value = '';
+      return;
+    }
+
     setUploading(true);
     try {
       const path = `pets/${currentUser.id}/${Date.now()}_${file.name}`;
       const url = await uploadPhoto(file, path);
-      setForm({ ...form, photo: url });
-    } catch (err) { console.error('Erro ao enviar foto:', err); }
-    setUploading(false);
+      setForm(prev => ({ ...prev, photo: url }));
+    } catch (err) {
+      console.error('Erro ao enviar foto:', err);
+      setPhotoError(getPhotoUploadErrorMessage(err));
+    } finally {
+      setUploading(false);
+      input.value = '';
+    }
   };
 
   const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
@@ -294,6 +326,7 @@ export default function PetsPage() {
                     </button>
                     <p className="text-xs text-gray-400 mt-1">ou cole uma URL abaixo</p>
                     <input type="url" value={form.photo} onChange={e => setForm({...form, photo: e.target.value})} placeholder="https://..." className="w-full mt-1 px-3 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-orange-200" />
+                    {photoError && <p className="text-xs text-rose-500 mt-1">{photoError}</p>}
                   </div>
                 </div>
               </div>
@@ -316,7 +349,7 @@ export default function PetsPage() {
               </div>
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setShowForm(false)} className="flex-1 py-2.5 border border-gray-200 text-gray-600 font-medium rounded-xl text-sm hover:bg-gray-50 cursor-pointer whitespace-nowrap">Cancelar</button>
-                <button type="submit" className="flex-1 py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-xl text-sm transition-colors cursor-pointer whitespace-nowrap">{editingId ? 'Salvar alterações' : 'Adicionar pet'}</button>
+                <button type="submit" disabled={uploading} className="flex-1 py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-xl text-sm transition-colors cursor-pointer whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed">{uploading ? 'Enviando foto...' : editingId ? 'Salvar alterações' : 'Adicionar pet'}</button>
               </div>
             </form>
           </div>

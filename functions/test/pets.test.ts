@@ -57,6 +57,16 @@ test('pro (unlimited) plan can create many pets', async () => {
   assert.equal(snap.data()?.petCount, 5);
 });
 
+test('createPetTransaction preserves the photo field', async () => {
+  await seedUser('user1', 3);
+  const { id } = await createPetTransaction(db, 'user1', {
+    name: 'Rex', species: 'Cão', photo: 'https://example.com/rex.jpg',
+  });
+
+  const snap = await db.doc(`pets/${id}`).get();
+  assert.equal(snap.data()?.photo, 'https://example.com/rex.jpg');
+});
+
 test('deleting a pet decrements the counter', async () => {
   await seedUser('user1', 3);
   const { id } = await createPetTransaction(db, 'user1', { name: 'Rex', species: 'Cão' });
