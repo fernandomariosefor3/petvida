@@ -1,7 +1,7 @@
 import { useState, useRef, lazy, Suspense } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
-import { determineImageMime } from '@/contexts/data/DataContext';
+import { determineImageMime } from '@/lib/imageMime';
 import { Pet, isUnlimited } from '@/types';
 
 const PetCompareModal = lazy(() => import('./components/PetCompareModal'));
