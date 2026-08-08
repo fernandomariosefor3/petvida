@@ -1,3 +1,4 @@
+import { lazy } from 'react';
 import AdminPage from '@/pages/admin/page';
 import { RouteObject } from 'react-router-dom';
 import HomePage from '@/pages/home/page';
@@ -17,6 +18,9 @@ import BillingPage from '@/pages/billing/page';
 import NotificationSettingsPage from '@/pages/settings/notifications/page';
 import NotFound from '@/pages/NotFound';
 
+// Leaflet (~150kB) is only needed on this one page — lazy-loaded so it never lands in the main bundle for everyone else.
+const ServicesPage = lazy(() => import('@/pages/services/page'));
+
 const routes: RouteObject[] = [
   { path: '/', element: <HomePage /> },
   { path: '/register', element: <RegistrationPage /> },
@@ -33,6 +37,7 @@ const routes: RouteObject[] = [
       { path: 'pets/:id', element: <PetDetailPage /> },
       { path: 'reminders', element: <RemindersPage /> },
       { path: 'health', element: <HealthPage /> },
+      { path: 'services', element: <ServicesPage /> },
       { path: 'planos', element: <PlanosPage /> },
       { path: 'billing', element: <BillingPage /> },
       { path: 'settings/notifications', element: <NotificationSettingsPage /> },

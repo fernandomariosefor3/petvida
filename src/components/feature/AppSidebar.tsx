@@ -7,6 +7,7 @@ const navItems = [
   { path: '/pets', label: 'Meus Pets', icon: 'ri-heart-2-line' },
   { path: '/reminders', label: 'Lembretes', icon: 'ri-alarm-line' },
   { path: '/health', label: 'Saúde', icon: 'ri-heart-pulse-line' },
+  { path: '/services', label: 'Serviços 24h', icon: 'ri-first-aid-kit-line' },
   { path: '/planos', label: 'Planos', icon: 'ri-vip-crown-line' },
 ];
 
