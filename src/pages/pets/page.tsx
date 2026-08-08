@@ -1,7 +1,7 @@
 import { useState, useRef, lazy, Suspense } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
-import { determineImageMime } from '@/lib/imageMime';
+import { detectImageMime } from '@/lib/imageMime';
 import { Pet, isUnlimited } from '@/types';
 
 const PetCompareModal = lazy(() => import('./components/PetCompareModal'));
@@ -69,13 +69,24 @@ export default function PetsPage() {
     if (!file) return;
     setPhotoError(null);
 
-    // Determine a safe MIME from the browser-provided type or the file extension.
-    const normalizedMime = determineImageMime(file);
-    if (!normalizedMime) {
-      setPhotoError('Selecione um arquivo de imagem (JPG, PNG ou WEBP).');
+    // Log basic metadata for diagnosis (name, type, size). Do NOT log file contents.
+    console.debug('photo upload attempt', { name: file.name, type: file.type, size: file.size });
+
+    // Detect MIME by magic bytes
+    try {
+      const detected = await detectImageMime(file);
+      if (!detected) {
+        setPhotoError('Este arquivo não está em um formato de imagem compatível. Use JPG, PNG ou WEBP.');
+        input.value = '';
+        return;
+      }
+    } catch (err) {
+      console.error('Erro ao detectar tipo de imagem:', err);
+      setPhotoError('Não foi possível processar a imagem. Tente outro arquivo.');
       input.value = '';
       return;
     }
+
     if (file.size > MAX_PHOTO_SIZE_BYTES) {
       setPhotoError('A imagem deve ter no máximo 5 MB.');
       input.value = '';
@@ -321,7 +332,7 @@ export default function PetsPage() {
                     }
                   </div>
                   <div className="flex-1">
-                    <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
+                    <input ref={fileInputRef} type="file" accept=".jpg,.jpeg,.jfif,.png,.webp,image/jpeg,image/png,image/webp" onChange={handlePhotoUpload} className="hidden" />
                     <button type="button" onClick={() => canUploadPhoto ? fileInputRef.current?.click() : setUpgradeReason('photo')} disabled={uploading}
                       className={`text-sm font-medium cursor-pointer disabled:opacity-50 ${canUploadPhoto ? 'text-orange-600 hover:text-orange-700' : 'text-gray-400'}`}>
                       {uploading ? <span className="flex items-center gap-1"><i className="ri-loader-4-line animate-spin"></i> Enviando...</span>

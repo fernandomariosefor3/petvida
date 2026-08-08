@@ -5,7 +5,7 @@ import {
   onSnapshot,
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { determineImageMime } from '@/lib/imageMime';
+import { detectImageMime } from '@/lib/imageMime';
 import { httpsCallable } from 'firebase/functions';
 import { db, storage, functions } from '@/lib/firebase';
 import { trackEvent } from '@/lib/analytics';
@@ -113,8 +113,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const getPetById = useCallback((id: string) => pets.find(p => p.id === id), [pets]);
 
     const uploadPhoto = async (file: File, path: string): Promise<string> => {
-      const normalizedMime = determineImageMime(file);
-      if (!normalizedMime) throw new Error('Tipo de arquivo não suportado. Use JPG, PNG ou WEBP.');
+      // Detect MIME by file signature (magic bytes)
+      const mime = await detectImageMime(file);
+      if (!mime) throw new Error('Este arquivo não está em um formato de imagem compatível. Use JPG, PNG ou WEBP.');
 
       // Enforce size limit of 5 MB
       const maxBytes = 5 * 1024 * 1024;
@@ -123,7 +124,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       const storageRef = ref(storage, path);
       // Pass explicit metadata so Firebase Storage will have a proper contentType even when
       // the browser did not provide one.
-      await uploadBytes(storageRef, file, { contentType: normalizedMime });
+      await uploadBytes(storageRef, file, { contentType: mime });
       return getDownloadURL(storageRef);
     };
 
