@@ -6,6 +6,7 @@ import type { PdfPeriod } from '@/lib/pdf';
 import PetHeroCard from './components/PetHeroCard';
 import PetHealthTab from './components/PetHealthTab';
 import PetRemindersTab from './components/PetRemindersTab';
+import SosQrCodeModal from './components/SosQrCodeModal';
 
 type TabType = 'health' | 'reminders';
 type PetFormData = Omit<Pet, 'id' | 'userId' | 'createdAt'>;
@@ -15,13 +16,14 @@ const speciesOptions = ['Cão', 'Gato', 'Pássaro', 'Coelho', 'Hamster', 'Peixe'
 export default function PetDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { pets, reminders, healthRecords, updatePet, deletePet } = useApp();
+  const { currentUser, pets, reminders, healthRecords, updatePet, deletePet } = useApp();
 
   const pet = pets.find(p => p.id === id);
 
   const [activeTab, setActiveTab] = useState<TabType>('health');
   const [showEdit, setShowEdit] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showSos, setShowSos] = useState(false);
   const [form, setForm] = useState<PetFormData | null>(null);
   const [pdfPeriod, setPdfPeriod] = useState<PdfPeriod>('all');
 
@@ -124,6 +126,12 @@ export default function PetDetailPage() {
 
         {/* Export PDF */}
         <div className="flex items-center justify-end gap-2 mb-5">
+          <button
+            onClick={() => setShowSos(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 font-semibold rounded-xl text-xs transition-colors cursor-pointer whitespace-nowrap"
+          >
+            🆘 Perfil SOS
+          </button>
           <select
             value={pdfPeriod}
             onChange={e => setPdfPeriod(e.target.value as PdfPeriod)}
@@ -246,6 +254,17 @@ export default function PetDetailPage() {
             </form>
           </div>
         </div>
+      )}
+
+      {/* SOS QR Code */}
+      {showSos && (
+        <SosQrCodeModal
+          pet={pet}
+          defaultContactName={currentUser?.name ?? ''}
+          defaultPhone={currentUser?.phone ?? ''}
+          onClose={() => setShowSos(false)}
+          onSave={(data) => updatePet(pet.id, data)}
+        />
       )}
 
       {/* Delete Confirm */}

@@ -11,7 +11,7 @@
     "deploy": "npm run build && firebase deploy --only functions",
     "logs": "firebase functions:log",
     "test:unit": "node --import tsx --test test/plan-resolution.test.ts",
-    "test:emulator": "node --import tsx --test --test-concurrency=1 test/pets.test.ts test/reminders.test.ts test/subscription-sync.test.ts test/webhook-idempotency.test.ts test/rules.test.ts",
+    "test:emulator": "node --import tsx --test --test-concurrency=1 test/pets.test.ts test/reminders.test.ts test/subscription-sync.test.ts test/webhook-idempotency.test.ts test/rules.test.ts test/sos.test.ts",
     "test": "npm run test:unit && firebase emulators:exec --only firestore --project demo-petvida-test \"npm run test:emulator\""
   },
   "dependencies": {

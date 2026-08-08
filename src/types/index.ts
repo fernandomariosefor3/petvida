@@ -57,6 +57,13 @@ export interface Pet {
   allergies: string;
   notes: string;
   createdAt: string;
+  // SOS público (v4) — opcionais: pets existentes não têm esses campos até o dono ativar.
+  isSosEnabled?: boolean;
+  publicSosId?: string;
+  sosContactName?: string;
+  sosPhone?: string;
+  sosWhatsapp?: string;
+  sosMedicalNotes?: string;
 }
 
 export interface Reminder {

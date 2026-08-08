@@ -3,6 +3,7 @@ import { RouteObject } from 'react-router-dom';
 import HomePage from '@/pages/home/page';
 import RegistrationPage from '@/pages/registration/page';
 import GuestPetPage from '@/pages/guest-pet/page';
+import SosPublicPage from '@/pages/sos-public/page';
 import CheckoutSuccessPage from '@/pages/checkout-success/page';
 import DashboardPage from '@/pages/dashboard/page';
 import PetsPage from '@/pages/pets/page';
@@ -20,6 +21,7 @@ const routes: RouteObject[] = [
   { path: '/', element: <HomePage /> },
   { path: '/register', element: <RegistrationPage /> },
   { path: '/carteirinha-teste', element: <GuestPetPage /> },
+  { path: '/p/:publicSosId', element: <SosPublicPage /> },
   { path: '/checkout-success', element: <CheckoutSuccessPage /> },
   { path: '/faq', element: <FaqPage /> },
   {

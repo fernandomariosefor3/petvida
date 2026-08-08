@@ -8,3 +8,4 @@ export { onUserPlanChangedSyncLimits, reconcileCounters } from './counters.js';
 export { sendReminderNotifications } from './reminders.js';
 export { createPet, deletePet } from './pets.js';
 export { createReminder, deleteReminder } from './reminders-crud.js';
+export { getPublicSosProfile } from './sos.js';
