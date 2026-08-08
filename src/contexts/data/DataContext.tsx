@@ -71,6 +71,32 @@ function mapHealthRecord(id: string, data: Record<string, unknown>): HealthRecor
   };
 }
 
+export function determineImageMime(file: File): string | null {
+  const allowedExts: Record<string, string> = {
+    'jpg': 'image/jpeg',
+    'jpeg': 'image/jpeg',
+    'png': 'image/png',
+    'webp': 'image/webp',
+  };
+
+  // Prefer the browser-provided MIME if it clearly indicates an image
+  if (file.type && file.type.startsWith('image/')) return file.type;
+
+  // Derive by extension when MIME is empty or not usable
+  const name = (file.name || '').toLowerCase();
+  const idx = name.lastIndexOf('.');
+  if (idx === -1) return null;
+  const ext = name.slice(idx + 1);
+  const mapped = allowedExts[ext];
+  if (mapped) return mapped;
+
+  // If file.type exists but doesn't start with image/, reject to avoid accepting arbitrary types
+  if (file.type) return null;
+
+  // No type and no allowed extension
+  return null;
+}
+
 function stripInternalFields<T extends object>(obj: Partial<T>): Record<string, unknown> {
   const excluded = new Set(['id', 'userId', 'createdAt']);
   return Object.fromEntries(Object.entries(obj).filter(([k, v]) => !excluded.has(k) && v !== undefined));
@@ -110,11 +136,20 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const getPetById = useCallback((id: string) => pets.find(p => p.id === id), [pets]);
 
-  const uploadPhoto = async (file: File, path: string): Promise<string> => {
-    const storageRef = ref(storage, path);
-    await uploadBytes(storageRef, file);
-    return getDownloadURL(storageRef);
-  };
+    const uploadPhoto = async (file: File, path: string): Promise<string> => {
+      const normalizedMime = determineImageMime(file);
+      if (!normalizedMime) throw new Error('Tipo de arquivo não suportado. Use JPG, PNG ou WEBP.');
+
+      // Enforce size limit of 5 MB
+      const maxBytes = 5 * 1024 * 1024;
+      if (file.size > maxBytes) throw new Error('Arquivo maior que 5 MB.');
+
+      const storageRef = ref(storage, path);
+      // Pass explicit metadata so Firebase Storage will have a proper contentType even when
+      // the browser did not provide one.
+      await uploadBytes(storageRef, file, { contentType: normalizedMime });
+      return getDownloadURL(storageRef);
+    };
 
   const addPet = async (pet: Omit<Pet, 'id' | 'userId' | 'createdAt'>) => {
     if (!firebaseUser) return;

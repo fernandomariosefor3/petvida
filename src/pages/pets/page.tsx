@@ -1,6 +1,7 @@
 import { useState, useRef, lazy, Suspense } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
+import { determineImageMime } from '@/contexts/data/DataContext';
 import { Pet, isUnlimited } from '@/types';
 
 const PetCompareModal = lazy(() => import('./components/PetCompareModal'));
@@ -68,8 +69,10 @@ export default function PetsPage() {
     if (!file) return;
     setPhotoError(null);
 
-    if (!file.type.startsWith('image/')) {
-      setPhotoError('Selecione um arquivo de imagem.');
+    // Determine a safe MIME from the browser-provided type or the file extension.
+    const normalizedMime = determineImageMime(file);
+    if (!normalizedMime) {
+      setPhotoError('Selecione um arquivo de imagem (JPG, PNG ou WEBP).');
       input.value = '';
       return;
     }
