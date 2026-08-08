@@ -7,6 +7,7 @@ import PetHeroCard from './components/PetHeroCard';
 import PetHealthTab from './components/PetHealthTab';
 import PetRemindersTab from './components/PetRemindersTab';
 import SosQrCodeModal from './components/SosQrCodeModal';
+import SocialCardModal from './components/SocialCardModal';
 
 type TabType = 'health' | 'reminders';
 type PetFormData = Omit<Pet, 'id' | 'userId' | 'createdAt'>;
@@ -24,6 +25,7 @@ export default function PetDetailPage() {
   const [showEdit, setShowEdit] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showSos, setShowSos] = useState(false);
+  const [showSocialCard, setShowSocialCard] = useState(false);
   const [form, setForm] = useState<PetFormData | null>(null);
   const [pdfPeriod, setPdfPeriod] = useState<PdfPeriod>('all');
 
@@ -131,6 +133,12 @@ export default function PetDetailPage() {
             className="flex items-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 font-semibold rounded-xl text-xs transition-colors cursor-pointer whitespace-nowrap"
           >
             🆘 Perfil SOS
+          </button>
+          <button
+            onClick={() => setShowSocialCard(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-violet-50 hover:bg-violet-100 text-violet-600 font-semibold rounded-xl text-xs transition-colors cursor-pointer whitespace-nowrap"
+          >
+            📸 Compartilhar
           </button>
           <select
             value={pdfPeriod}
@@ -265,6 +273,11 @@ export default function PetDetailPage() {
           onClose={() => setShowSos(false)}
           onSave={(data) => updatePet(pet.id, data)}
         />
+      )}
+
+      {/* Social Card */}
+      {showSocialCard && (
+        <SocialCardModal pet={pet} overdueCount={overdueCount} onClose={() => setShowSocialCard(false)} />
       )}
 
       {/* Delete Confirm */}
