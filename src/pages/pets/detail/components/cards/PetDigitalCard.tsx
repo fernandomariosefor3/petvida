@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Pet } from '@/types';
 
 interface Props {
@@ -31,6 +32,27 @@ const formatAge = (value: string) => {
 
 const normalizeName = (value: string) => value.trim();
 
+// Small helper to display pet photo with graceful fallback on error.
+function PetPhoto({ imgSrc, alt }: { imgSrc: string; alt: string }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) {
+    return (
+      <div className="text-gray-400 text-3xl">
+        <i className="ri-paw-line"></i>
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={imgSrc}
+      alt={alt}
+      className="object-cover w-full h-full"
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
 export default function PetDigitalCard({ pet, qrDataUrl, isSosActive, loadingQr }: Props) {
   const items = [
     { label: 'Raça', value: pet.breed },
@@ -57,12 +79,8 @@ export default function PetDigitalCard({ pet, qrDataUrl, isSosActive, loadingQr 
         <div className="grid grid-cols-[96px_1fr] gap-4 items-center">
           <div className="w-24 h-24 rounded-3xl bg-gray-100 border border-gray-200 overflow-hidden flex items-center justify-center">
             {pet.photo ? (
-              <img
-                src={pet.photo}
-                alt={pet.name}
-                className="object-cover w-full h-full"
-                crossOrigin="anonymous"
-              />
+              // show image and fallback to placeholder on error
+              <PetPhoto imgSrc={pet.photo} alt={pet.name} />
             ) : (
               <div className="text-gray-400 text-3xl">
                 <i className="ri-paw-line"></i>
