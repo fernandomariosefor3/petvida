@@ -8,6 +8,7 @@ import PetHealthTab from './components/PetHealthTab';
 import PetRemindersTab from './components/PetRemindersTab';
 import SosQrCodeModal from './components/SosQrCodeModal';
 import SocialCardModal from './components/SocialCardModal';
+import PetDigitalCardModal from './components/PetDigitalCardModal';
 
 type TabType = 'health' | 'reminders';
 type PetFormData = Omit<Pet, 'id' | 'userId' | 'createdAt'>;
@@ -25,6 +26,7 @@ export default function PetDetailPage() {
   const [showEdit, setShowEdit] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showSos, setShowSos] = useState(false);
+  const [showDigitalCard, setShowDigitalCard] = useState(false);
   const [showSocialCard, setShowSocialCard] = useState(false);
   const [form, setForm] = useState<PetFormData | null>(null);
   const [pdfPeriod, setPdfPeriod] = useState<PdfPeriod>('all');
@@ -129,10 +131,10 @@ export default function PetDetailPage() {
         {/* Export PDF */}
         <div className="flex items-center justify-end gap-2 mb-5">
           <button
-            onClick={() => setShowSos(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 font-semibold rounded-xl text-xs transition-colors cursor-pointer whitespace-nowrap"
+            onClick={() => setShowDigitalCard(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 font-semibold rounded-xl text-xs transition-colors cursor-pointer whitespace-nowrap"
           >
-            🆘 Perfil SOS
+            🪪 Carteirinha Digital
           </button>
           <button
             onClick={() => setShowSocialCard(true)}
@@ -262,6 +264,15 @@ export default function PetDetailPage() {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Digital Card */}
+      {showDigitalCard && (
+        <PetDigitalCardModal
+          pet={pet}
+          onClose={() => setShowDigitalCard(false)}
+          onOpenSos={() => setShowSos(true)}
+        />
       )}
 
       {/* SOS QR Code */}
