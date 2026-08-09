@@ -2,6 +2,7 @@ import { useState, useRef, lazy, Suspense } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
 import { detectImageMime } from '@/lib/imageMime';
+import { processPetImage } from '@/lib/imageProcessor';
 import { Pet, isUnlimited } from '@/types';
 
 const PetCompareModal = lazy(() => import('./components/PetCompareModal'));
@@ -39,6 +40,7 @@ export default function PetsPage() {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [processingPhoto, setProcessingPhoto] = useState(false);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const [upgradeReason, setUpgradeReason] = useState<'pets' | 'photo' | null>(null);
   const [showCompare, setShowCompare] = useState(false);
@@ -72,38 +74,38 @@ export default function PetsPage() {
     // Log basic metadata for diagnosis (name, type, size). Do NOT log file contents.
     console.debug('photo upload attempt', { name: file.name, type: file.type, size: file.size });
 
-    // Detect MIME by magic bytes
+    // Use processing pipeline that resizes and compresses before upload
+    setPhotoError(null);
+    setProcessingPhoto(true);
+    let processedTempUrl: string | null = null;
     try {
-      const detected = await detectImageMime(file);
-      if (!detected) {
-        setPhotoError('Este arquivo não está em um formato de imagem compatível. Use JPG, PNG ou WEBP.');
-        input.value = '';
-        return;
+      const processed = await processPetImage(file);
+      // show preview of processed image (object URL) so user sees what will be uploaded
+      processedTempUrl = URL.createObjectURL(processed.file);
+      setForm(prev => ({ ...prev, photo: processedTempUrl }));
+
+      // upload
+      setProcessingPhoto(false);
+      setUploading(true);
+      try {
+        const path = `pets/${currentUser.id}/${Date.now()}_${processed.file.name}`;
+        const url = await uploadPhoto(processed.file, path);
+        setForm(prev => ({ ...prev, photo: url }));
+      } catch (err) {
+        console.error('Erro ao enviar foto:', err);
+        setPhotoError(getPhotoUploadErrorMessage(err));
+      } finally {
+        setUploading(false);
       }
-    } catch (err) {
-      console.error('Erro ao detectar tipo de imagem:', err);
-      setPhotoError('Não foi possível processar a imagem. Tente outro arquivo.');
+    } catch (err: any) {
+      console.error('Erro ao processar imagem:', err);
+      setPhotoError(typeof err?.message === 'string' ? err.message : 'Não foi possível processar a imagem.');
       input.value = '';
-      return;
-    }
-
-    if (file.size > MAX_PHOTO_SIZE_BYTES) {
-      setPhotoError('A imagem deve ter no máximo 5 MB.');
-      input.value = '';
-      return;
-    }
-
-    setUploading(true);
-    try {
-      const path = `pets/${currentUser.id}/${Date.now()}_${file.name}`;
-      const url = await uploadPhoto(file, path);
-      setForm(prev => ({ ...prev, photo: url }));
-    } catch (err) {
-      console.error('Erro ao enviar foto:', err);
-      setPhotoError(getPhotoUploadErrorMessage(err));
     } finally {
-      setUploading(false);
-      input.value = '';
+      setProcessingPhoto(false);
+      if (processedTempUrl) URL.revokeObjectURL(processedTempUrl);
+      // ensure input cleared if upload not in progress
+      if (!uploading) input.value = '';
     }
   };
 
@@ -335,7 +337,8 @@ export default function PetsPage() {
                     <input ref={fileInputRef} type="file" accept=".jpg,.jpeg,.jfif,.png,.webp,image/jpeg,image/png,image/webp" onChange={handlePhotoUpload} className="hidden" />
                     <button type="button" onClick={() => canUploadPhoto ? fileInputRef.current?.click() : setUpgradeReason('photo')} disabled={uploading}
                       className={`text-sm font-medium cursor-pointer disabled:opacity-50 ${canUploadPhoto ? 'text-orange-600 hover:text-orange-700' : 'text-gray-400'}`}>
-                      {uploading ? <span className="flex items-center gap-1"><i className="ri-loader-4-line animate-spin"></i> Enviando...</span>
+                      {processingPhoto ? <span className="flex items-center gap-1"><i className="ri-loader-4-line animate-spin"></i> Preparando foto...</span>
+                        : uploading ? <span className="flex items-center gap-1"><i className="ri-loader-4-line animate-spin"></i> Enviando...</span>
                         : canUploadPhoto ? 'Enviar foto' : <span><i className="ri-lock-line mr-1"></i>Pro</span>}
                     </button>
                     <p className="text-xs text-gray-400 mt-1">ou cole uma URL abaixo</p>
