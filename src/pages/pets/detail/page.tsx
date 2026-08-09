@@ -290,7 +290,10 @@ export default function PetDetailPage() {
         <PetDigitalCardModal
           pet={pet}
           onClose={() => setShowDigitalCard(false)}
-          onOpenSos={() => setShowSos(true)}
+          onOpenSos={() => {
+            setShowDigitalCard(false);
+            setShowSos(true);
+          }}
         />
       )}
 

@@ -20,6 +20,7 @@ interface Props {
 
 export default function SosQrCodeModal({ pet, defaultContactName, defaultPhone, onClose, onSave }: Props) {
   const isActive = Boolean(pet.isSosEnabled && pet.publicSosId);
+  const [publicSosId, setPublicSosId] = useState(pet.publicSosId || '');
   const [mode, setMode] = useState<'form' | 'qr'>(isActive ? 'qr' : 'form');
   const [form, setForm] = useState<SosFormData>({
     sosContactName: pet.sosContactName || defaultContactName,
@@ -30,21 +31,79 @@ export default function SosQrCodeModal({ pet, defaultContactName, defaultPhone, 
   const [active, setActive] = useState(isActive);
   const [saving, setSaving] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState('');
+  const [loadingQr, setLoadingQr] = useState(false);
+  const [qrError, setQrError] = useState(false);
 
-  const sosUrl = pet.publicSosId ? buildSosUrl(pet.publicSosId) : '';
+  useEffect(() => {
+    if (pet.publicSosId) {
+      setPublicSosId(pet.publicSosId);
+    }
+  }, [pet.publicSosId]);
+
+  const sosUrl = publicSosId ? buildSosUrl(publicSosId) : '';
 
   useEffect(() => {
     if (mode !== 'qr' || !sosUrl) return;
-    generateQrDataUrl(sosUrl).then(setQrDataUrl).catch(() => setQrDataUrl(''));
+
+    let isMounted = true;
+    setLoadingQr(true);
+    setQrError(false);
+
+    generateQrDataUrl(sosUrl)
+      .then((dataUrl) => {
+        if (isMounted) {
+          setQrDataUrl(dataUrl);
+          setQrError(false);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setQrDataUrl('');
+          setQrError(true);
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setLoadingQr(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, [mode, sosUrl]);
+
+  const retryGenerateQr = () => {
+    if (!sosUrl) return;
+    setLoadingQr(true);
+    setQrError(false);
+    generateQrDataUrl(sosUrl)
+      .then((dataUrl) => {
+        setQrDataUrl(dataUrl);
+        setQrError(false);
+      })
+      .catch(() => {
+        setQrDataUrl('');
+        setQrError(true);
+      })
+      .finally(() => {
+        setLoadingQr(false);
+      });
+  };
 
   const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSaving(true);
+    setQrError(false);
     try {
-      const publicSosId = pet.publicSosId || crypto.randomUUID();
-      await onSave({ ...form, isSosEnabled: active, publicSosId });
-      if (active) setMode('qr');
+      const nextPublicSosId = publicSosId || pet.publicSosId || crypto.randomUUID();
+      await onSave({ ...form, isSosEnabled: active, publicSosId: nextPublicSosId });
+      setPublicSosId(nextPublicSosId);
+      if (active) {
+        setMode('qr');
+      }
+    } catch (err) {
+      console.error('Erro ao salvar perfil SOS:', err);
     } finally {
       setSaving(false);
     }
@@ -65,14 +124,35 @@ export default function SosQrCodeModal({ pet, defaultContactName, defaultPhone, 
             <p className="text-gray-500 text-sm mb-4">
               Escaneie ou imprima este QR code na coleira. Quem encontrar o {pet.name} acessa o contato sem precisar de login.
             </p>
-            <div className="w-48 h-48 mx-auto mb-4 flex items-center justify-center bg-gray-50 rounded-2xl border border-gray-100">
-              {qrDataUrl ? <img src={qrDataUrl} alt="QR code do perfil SOS" className="w-40 h-40" /> : <i className="ri-loader-4-line animate-spin text-2xl text-gray-300"></i>}
+            <div className="w-48 h-48 mx-auto mb-4 flex items-center justify-center bg-gray-50 rounded-2xl border border-gray-100 relative overflow-hidden">
+              {loadingQr ? (
+                <div className="flex flex-col items-center gap-2 text-gray-400">
+                  <i className="ri-loader-4-line animate-spin text-3xl text-orange-500"></i>
+                  <span className="text-xs">Gerando QR Code...</span>
+                </div>
+              ) : qrError ? (
+                <div className="p-3 text-center">
+                  <i className="ri-error-warning-line text-2xl text-amber-500 mb-1"></i>
+                  <p className="text-xs text-gray-600 mb-2">Não foi possível gerar o QR Code. Tente novamente.</p>
+                  <button
+                    type="button"
+                    onClick={retryGenerateQr}
+                    className="px-3 py-1 bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                  >
+                    Tentar novamente
+                  </button>
+                </div>
+              ) : qrDataUrl ? (
+                <img src={qrDataUrl} alt="QR code do perfil SOS" className="w-40 h-40" />
+              ) : (
+                <div className="text-gray-400 text-xs">QR Code indisponível</div>
+              )}
             </div>
             <p className="text-gray-400 text-xs mb-6 break-all">{sosUrl}</p>
             <div className="grid grid-cols-2 gap-3 mb-3">
               <button
                 type="button"
-                disabled={!qrDataUrl}
+                disabled={!qrDataUrl || loadingQr}
                 onClick={() => downloadQrPng(qrDataUrl, pet.name)}
                 className="py-3 rounded-xl border-2 border-gray-200 text-gray-700 font-semibold text-sm hover:border-orange-300 transition-all cursor-pointer disabled:opacity-50"
               >
@@ -80,7 +160,7 @@ export default function SosQrCodeModal({ pet, defaultContactName, defaultPhone, 
               </button>
               <button
                 type="button"
-                disabled={!qrDataUrl}
+                disabled={!qrDataUrl || loadingQr}
                 onClick={() => downloadQrPdf(qrDataUrl, pet.name)}
                 className="py-3 rounded-xl border-2 border-gray-200 text-gray-700 font-semibold text-sm hover:border-orange-300 transition-all cursor-pointer disabled:opacity-50"
               >

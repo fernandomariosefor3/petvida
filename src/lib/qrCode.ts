@@ -1,6 +1,7 @@
 /** Loaded dynamically so the QR encoder never lands in the main bundle — only pulled in when the SOS modal opens. */
 export async function generateQrDataUrl(text: string, size = 512): Promise<string> {
-  const QRCode = await import('qrcode');
+  const QRCodeModule = await import('qrcode');
+  const QRCode = QRCodeModule.default || QRCodeModule;
   return QRCode.toDataURL(text, { width: size, margin: 1 });
 }
 
