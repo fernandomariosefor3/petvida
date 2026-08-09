@@ -293,9 +293,21 @@ export default function PetsPage() {
                       <p className="text-xs text-amber-700 truncate">Alergias: {pet.allergies}</p>
                     </div>
                   )}
-                  <Link to={`/pets/${pet.id}`} className="mt-4 flex items-center justify-center gap-1.5 w-full py-2 rounded-lg bg-gray-50 hover:bg-orange-50 text-gray-600 hover:text-orange-600 text-xs font-semibold transition-all cursor-pointer whitespace-nowrap border border-gray-100 hover:border-orange-100">
-                    Ver detalhes <i className="ri-arrow-right-line text-xs"></i>
-                  </Link>
+                  <div className="mt-4 grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/pets/${pet.id}?open=card`)}
+                      className="flex items-center justify-center gap-1.5 w-full py-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-semibold text-xs transition-all cursor-pointer whitespace-nowrap border border-emerald-100"
+                    >
+                      🪪 Carteirinha
+                    </button>
+                    <Link
+                      to={`/pets/${pet.id}`}
+                      className="flex items-center justify-center gap-1.5 w-full py-2 rounded-lg bg-gray-50 hover:bg-orange-50 text-gray-600 hover:text-orange-600 text-xs font-semibold transition-all cursor-pointer whitespace-nowrap border border-gray-100 hover:border-orange-100"
+                    >
+                      Ver detalhes <i className="ri-arrow-right-line text-xs"></i>
+                    </Link>
+                  </div>
                 </div>
               </div>
             ))}

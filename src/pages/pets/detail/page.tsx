@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useApp } from '@/contexts/AppContext';
 import { Pet } from '@/types';
 import type { PdfPeriod } from '@/lib/pdf';
@@ -31,6 +31,24 @@ export default function PetDetailPage() {
   const [form, setForm] = useState<PetFormData | null>(null);
   const [pdfPeriod, setPdfPeriod] = useState<PdfPeriod>('all');
 
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Open digital card modal automatically when query ?open=card is present.
+  // Run this hook unconditionally (before early returns) so hooks order remains stable.
+  useEffect(() => {
+    try {
+      const open = searchParams.get('open');
+      if (open === 'card' && pet) {
+        setShowDigitalCard(true);
+        // remove the param so refresh doesn't reopen
+        const newParams = new URLSearchParams(Array.from(searchParams.entries()).filter(([k]) => k !== 'open'));
+        setSearchParams(newParams, { replace: true });
+      }
+    } catch (err) {
+      // ignore malformed search params
+    }
+  }, [searchParams, setSearchParams, pet]);
+  
   if (!pet) {
     return (
       <div className="flex-1 flex items-center justify-center bg-gray-50">
@@ -64,6 +82,7 @@ export default function PetDetailPage() {
     });
     setShowEdit(true);
   };
+
 
   const handleEditSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
