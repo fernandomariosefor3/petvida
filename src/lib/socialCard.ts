@@ -1,7 +1,49 @@
+async function inlineImages(node: HTMLElement): Promise<() => void> {
+  const imgs = Array.from(node.querySelectorAll('img'));
+  const restoreFns: (() => void)[] = [];
+
+  await Promise.all(
+    imgs.map(async (img) => {
+      const src = img.getAttribute('src');
+      if (!src || src.startsWith('data:')) return;
+
+      try {
+        const res = await fetch(src);
+        if (res.ok) {
+          const blob = await res.blob();
+          const dataUrl = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = () => resolve('');
+            reader.readAsDataURL(blob);
+          });
+          if (dataUrl) {
+            img.setAttribute('src', dataUrl);
+            restoreFns.push(() => {
+              img.setAttribute('src', src);
+            });
+          }
+        }
+      } catch {
+        // Ignore fetch errors, html-to-image default behavior will apply
+      }
+    })
+  );
+
+  return () => {
+    restoreFns.forEach((restore) => restore());
+  };
+}
+
 /** Dynamically imported so html-to-image never lands in the main bundle — only pulled in when the share modal opens. */
 export async function renderCardToPng(node: HTMLElement): Promise<string> {
-  const { toPng } = await import('html-to-image');
-  return toPng(node, { pixelRatio: 4, cacheBust: true });
+  const restore = await inlineImages(node);
+  try {
+    const { toPng } = await import('html-to-image');
+    return await toPng(node, { pixelRatio: 4, cacheBust: false });
+  } finally {
+    restore();
+  }
 }
 
 export function downloadCardImage(dataUrl: string, filename: string): void {

@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 import { Pet } from '@/types';
 
 export type CardFormat = 'story' | 'feed';
@@ -19,6 +19,7 @@ const CARD_WIDTH = 270;
  * so this stays small and cheap to lay out on screen.
  */
 export default function SocialCardFrame({ pet, format, children }: Props) {
+  const [photoFailed, setPhotoFailed] = useState(false);
   const height = format === 'story' ? CARD_WIDTH * (16 / 9) : CARD_WIDTH;
 
   return (
@@ -26,12 +27,12 @@ export default function SocialCardFrame({ pet, format, children }: Props) {
       className="relative overflow-hidden bg-emerald-900"
       style={{ width: CARD_WIDTH, height }}
     >
-      {pet.photo ? (
+      {pet.photo && !photoFailed ? (
         <img
           src={pet.photo}
           alt=""
-          crossOrigin="anonymous"
           className="absolute inset-0 w-full h-full object-cover"
+          onError={() => setPhotoFailed(true)}
         />
       ) : (
         <div className="absolute inset-0 flex items-center justify-center bg-emerald-800">
