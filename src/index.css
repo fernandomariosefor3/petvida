@@ -1,3 +1,47 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ──────────────────────────────────────────
+   Antigravidade — efeito de levitação suave
+   ────────────────────────────────────────── */
+@keyframes float-antigravity {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-18px);
+  }
+}
+
+@keyframes float-antigravity-alt {
+  0%, 100% {
+    transform: translateY(-8px) rotate(-6deg);
+  }
+  50% {
+    transform: translateY(-24px) rotate(-6deg);
+  }
+}
+
+@keyframes float-antigravity-alt2 {
+  0%, 100% {
+    transform: translateY(-6px) rotate(6deg);
+  }
+  50% {
+    transform: translateY(-22px) rotate(6deg);
+  }
+}
+
+.animate-float {
+  animation: float-antigravity 4s ease-in-out infinite;
+}
+
+.animate-float-alt {
+  animation: float-antigravity-alt 4.6s ease-in-out infinite;
+  animation-delay: 0.8s;
+}
+
+.animate-float-alt2 {
+  animation: float-antigravity-alt2 5s ease-in-out infinite;
+  animation-delay: 1.4s;
+}

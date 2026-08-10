@@ -193,12 +193,12 @@ export default function HomePage() {
             </div>
             <div className="relative flex justify-center">
               <div className="relative w-56 md:w-64">
-                <img src="/images/screen-download.png" alt="PetVida App" className="w-full rounded-3xl shadow-2xl" />
+                <img src="/images/screen-download.png" alt="PetVida App" className="w-full rounded-3xl shadow-2xl animate-float" />
                 <div className="absolute -bottom-4 -left-12 w-44 hidden md:block">
-                  <img src="/images/screen-vacinas.png" alt="Vacinas" className="w-full rounded-2xl shadow-xl opacity-90 -rotate-6" />
+                  <img src="/images/screen-vacinas.png" alt="Vacinas" className="w-full rounded-2xl shadow-xl opacity-90 animate-float-alt" />
                 </div>
                 <div className="absolute -top-4 -right-12 w-44 hidden md:block">
-                  <img src="/images/screen-agenda.png" alt="Agenda" className="w-full rounded-2xl shadow-xl opacity-90 rotate-6" />
+                  <img src="/images/screen-agenda.png" alt="Agenda" className="w-full rounded-2xl shadow-xl opacity-90 animate-float-alt2" />
                 </div>
               </div>
             </div>
@@ -431,21 +431,49 @@ export default function HomePage() {
 
       {/* CTA */}
       <section className="py-24 bg-gradient-to-br from-orange-500 to-red-500 relative overflow-hidden">
-        <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
-          <img src="/logo.png" alt="PetVida" className="w-20 h-20 rounded-2xl mx-auto mb-6 shadow-lg" />
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-3">PetVida</h2>
-          <p className="text-orange-100 text-lg mb-2">Cuidando de quem você ama</p>
-          <div className="flex flex-wrap justify-center gap-3 my-8">
-            {['Saúde e histórico completo', 'Vacinas sempre em dia', 'Agenda inteligente', 'Nutrição equilibrada', '100% Gratuito'].map(item => (
-              <span key={item} className="bg-white/15 backdrop-blur-sm text-white text-sm font-medium px-4 py-2 rounded-full border border-white/20">
-                ✓ {item}
-              </span>
-            ))}
+        {/* Blobs decorativos de fundo */}
+        <div className="absolute -top-20 -right-20 w-80 h-80 bg-white/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-20 -left-20 w-80 h-80 bg-red-600/20 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="max-w-5xl mx-auto px-6 relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+
+            {/* Imagem dos pets flutuando */}
+            <div className="flex flex-col items-center justify-center order-2 lg:order-1">
+              <div className="relative">
+                <img
+                  src="/images/pets-floating.jpg"
+                  alt="Cachorro e gato flutuando — antigravidade PetVida"
+                  className="w-64 md:w-80 rounded-3xl shadow-2xl animate-float object-cover"
+                />
+                <div className="mx-auto mt-3 w-40 h-4 bg-black/20 rounded-full blur-md" />
+              </div>
+            </div>
+
+            {/* Texto e CTA */}
+            <div className="text-center lg:text-left order-1 lg:order-2">
+              <div className="flex items-center justify-center lg:justify-start gap-3 mb-6">
+                <img src="/logo.png" alt="PetVida" className="w-14 h-14 rounded-2xl shadow-lg" />
+                <h2 className="text-3xl md:text-4xl font-bold text-white">PetVida</h2>
+              </div>
+              <p className="text-orange-100 text-xl mb-2 font-medium">Cuidando de quem você ama</p>
+              <p className="text-white/70 text-sm mb-8 leading-relaxed">
+                Gerencie vacinas, consultas e a saúde completa dos seus pets em um só lugar. Simples, bonito e 100% gratuito.
+              </p>
+              <div className="flex flex-wrap justify-center lg:justify-start gap-3 mb-8">
+                {['Saúde e histórico completo', 'Vacinas sempre em dia', 'Agenda inteligente', 'Nutrição equilibrada', '100% Gratuito'].map(item => (
+                  <span key={item} className="bg-white/15 backdrop-blur-sm text-white text-sm font-medium px-4 py-2 rounded-full border border-white/20">
+                    ✓ {item}
+                  </span>
+                ))}
+              </div>
+              <Link to="/register" className="inline-flex items-center gap-2 px-10 py-4 bg-white text-orange-600 font-bold rounded-full transition-all text-lg cursor-pointer whitespace-nowrap hover:bg-orange-50 hover:scale-105 shadow-xl">
+                Começar agora — é grátis!
+                <i className="ri-arrow-right-line"></i>
+              </Link>
+            </div>
+
           </div>
-          <Link to="/register" className="inline-flex items-center gap-2 px-10 py-4 bg-white text-orange-600 font-bold rounded-full transition-colors text-lg cursor-pointer whitespace-nowrap hover:bg-orange-50 shadow-xl">
-            Baixe Agora!
-            <i className="ri-arrow-right-line"></i>
-          </Link>
         </div>
       </section>
 
