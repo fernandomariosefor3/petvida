@@ -44,4 +44,12 @@
 .animate-float-alt2 {
   animation: float-antigravity-alt2 5s ease-in-out infinite;
   animation-delay: 1.4s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-float,
+  .animate-float-alt,
+  .animate-float-alt2 {
+    animation: none;
+  }
 }
